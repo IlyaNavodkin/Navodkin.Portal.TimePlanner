@@ -94,6 +94,7 @@ const PX_PER_DAY_BY_ZOOM: Record<TimelineZoomPreset, number> = {
 const rowsRef = computed(() => props.rows)
 const daysRef = computed(() => props.days)
 const selectedTimelineId = ref("")
+const createArmedRowId = ref("")
 const graphScrollRef = ref<HTMLElement | null>(null)
 const timelineHeaderWrapRef = ref<HTMLElement | null>(null)
 let timelineHeaderResizeObserver: ResizeObserver | null = null
@@ -306,6 +307,25 @@ function updateSelectedYear(value: string): void {
   }
 
   selectedYear.value = value
+}
+
+function armRowForCreate(rowId: string): void {
+  if (!rowId) {
+    return
+  }
+
+  if (selectedTimelineId.value) {
+    selectedTimelineId.value = ""
+  }
+
+  createArmedRowId.value = createArmedRowId.value === rowId ? "" : rowId
+}
+
+function handleTimelineSelect(timelineId: string): void {
+  selectedTimelineId.value = timelineId
+  if (timelineId && createArmedRowId.value) {
+    createArmedRowId.value = ""
+  }
 }
 
 function handleResizeCommit(payload: TimelineBarCommitModel): void {
@@ -563,11 +583,13 @@ function handleGlobalKeyDown(event: KeyboardEvent): void {
     return
   }
 
-  if (!selectedTimelineId.value) {
-    return
+  if (selectedTimelineId.value) {
+    selectedTimelineId.value = ""
   }
 
-  selectedTimelineId.value = ""
+  if (createArmedRowId.value) {
+    createArmedRowId.value = ""
+  }
 }
 
 function syncLeftHeaderHeightWithTimelineHeader(): void {
@@ -707,6 +729,8 @@ watch(
             :saving-timeline-id="savingTimelineId"
             :success-timeline-id="successTimelineId"
             :error-timeline-id="errorTimelineId"
+            :create-armed="createArmedRowId === item.row.id"
+            @arm-create="armRowForCreate"
           />
         </template>
         </div>
@@ -751,11 +775,13 @@ watch(
                   :saving-timeline-id="savingTimelineId"
                   :success-timeline-id="successTimelineId"
                   :error-timeline-id="errorTimelineId"
+                  :create-armed="createArmedRowId === item.row.id"
                   @create="openCreateDialog"
+                  @arm-create="armRowForCreate"
                   @resize="handleResizeCommit"
                   @edit="openEditDialog"
                   @delete="emit('delete', $event)"
-                  @select="selectedTimelineId = $event"
+                  @select="handleTimelineSelect"
                 />
               </template>
             </div>

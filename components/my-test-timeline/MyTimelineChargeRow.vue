@@ -19,6 +19,7 @@ const props = defineProps<{
   savingTimelineId: string
   successTimelineId: string
   errorTimelineId: string
+  createArmed?: boolean
   mode?: "full" | "label" | "track"
 }>()
 
@@ -28,6 +29,7 @@ const emit = defineEmits<{
   edit: [timelineId: string]
   delete: [timelineId: string]
   select: [timelineId: string]
+  "arm-create": [rowId: string]
 }>()
 
 const trackRef = ref<HTMLElement | null>(null)
@@ -219,7 +221,9 @@ onBeforeUnmount(() => {
   <div
     v-if="mode === 'label'"
     class="my-timeline-charge-row__label"
+    :class="{ 'my-timeline-charge-row__label--create-armed': createArmed }"
     :style="{ width: `${labelColumnWidth}px`, height: `${rowHeightPx}px` }"
+    @dblclick="emit('arm-create', row.id)"
   >
     <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
   </div>
@@ -227,7 +231,9 @@ onBeforeUnmount(() => {
   <div
     v-if="mode === 'track'"
     class="my-timeline-charge-row__track-wrap"
+    :class="{ 'my-timeline-charge-row__track-wrap--create-armed': createArmed }"
     :style="{ height: `${rowHeightPx}px` }"
+    @dblclick="emit('arm-create', row.id)"
   >
     <div
       ref="trackRef"
@@ -250,11 +256,12 @@ onBeforeUnmount(() => {
           :style="{ left: `${(dayIndex - viewStartIndex) * pxPerDay}px` }"
         />
       </div>
-      <div class="my-timeline-charge-row__create-layer">
+      <div v-if="createArmed" class="my-timeline-charge-row__create-layer">
         <div
           v-for="dayIndex in visibleDayIndexes"
           :key="`create-track-${row.id}-${dayIndex}`"
           class="my-timeline-charge-row__create-cell"
+          :class="{ 'my-timeline-charge-row__create-cell--armed': createArmed }"
           :style="{ width: `${pxPerDay}px` }"
         >
           <button
@@ -297,11 +304,11 @@ onBeforeUnmount(() => {
     class="my-timeline-charge-row"
     :style="{ gridTemplateColumns: `${labelColumnWidth}px 1fr` }"
   >
-    <div class="my-timeline-charge-row__label">
+    <div class="my-timeline-charge-row__label" :class="{ 'my-timeline-charge-row__label--create-armed': createArmed }" @dblclick="emit('arm-create', row.id)">
       <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
     </div>
 
-    <div class="my-timeline-charge-row__track-wrap">
+    <div class="my-timeline-charge-row__track-wrap" :class="{ 'my-timeline-charge-row__track-wrap--create-armed': createArmed }" @dblclick="emit('arm-create', row.id)">
       <div
         ref="trackRef"
         class="my-timeline-charge-row__track"
@@ -323,11 +330,12 @@ onBeforeUnmount(() => {
             :style="{ left: `${(dayIndex - viewStartIndex) * pxPerDay}px` }"
           />
         </div>
-        <div class="my-timeline-charge-row__create-layer">
+        <div v-if="createArmed" class="my-timeline-charge-row__create-layer">
           <div
             v-for="dayIndex in visibleDayIndexes"
             :key="`create-full-${row.id}-${dayIndex}`"
             class="my-timeline-charge-row__create-cell"
+            :class="{ 'my-timeline-charge-row__create-cell--armed': createArmed }"
             :style="{ width: `${pxPerDay}px` }"
           >
             <button
@@ -435,6 +443,14 @@ onBeforeUnmount(() => {
   background: var(--ui-bg);
 }
 
+.my-timeline-charge-row__label--create-armed {
+  background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg));
+}
+
+.my-timeline-charge-row__track-wrap--create-armed {
+  background: color-mix(in srgb, var(--ui-primary) 6%, var(--ui-bg));
+}
+
 .my-timeline-charge-row__grid-bg {
   position: absolute;
   inset: 0;
@@ -476,6 +492,11 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.my-timeline-charge-row__create-cell--armed {
+  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-primary) 22%, transparent);
 }
 
 .my-timeline-charge-row__create-button {

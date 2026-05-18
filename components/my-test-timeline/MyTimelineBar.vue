@@ -291,7 +291,13 @@ onBeforeUnmount(() => {
 
 .my-timeline-bar--selected {
   z-index: 3;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-indigo-600) 36%, transparent);
+  border-color: color-mix(in srgb, var(--ui-primary) 72%, var(--color-slate-500));
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--ui-primary) 34%, var(--color-slate-700)),
+    color-mix(in srgb, var(--ui-primary) 28%, var(--color-slate-800))
+  );
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-primary) 36%, transparent);
 }
 
 .my-timeline-bar--saving {
