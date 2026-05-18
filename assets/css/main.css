@@ -1,0 +1,534 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root,
+.light {
+  /* Layout */
+  --app-header-height: 66px;
+  --app-content-height: calc(100vh - var(--app-header-height));
+
+  /* Transitions */
+  --transition-default: all 0.2s ease;
+  --transition-transform: transform 0.2s ease;
+  --transition-width: width 0.3s ease-in-out;
+
+  --sidebar-width: 374px;
+  --sidebar-width-collapsed: 24px;
+
+  /* Z-Index Layers */
+  --z-base: 0;
+  --z-sidebar: 300;
+  --z-sticky-popup: 1000;
+  --z-popover: 2000;
+
+  /* Primary Colors */
+  --primary1: #606060;
+  --primary-base: #6f6f6f;
+  --primary2: #858585;
+  --primary3: #9d9d9d;
+  --primary4: #d3d3d3;
+  --primary5: #ebebeb;
+  --primary6: #f1f1f1;
+
+  /* Secondary Colors - Calendar */
+  --feature1: rgba(255, 171, 45, 0.4);
+  --feature2: rgba(50, 144, 255, 0.4);
+  --feature3: rgba(45, 158, 70, 0.4);
+  --feature4: rgba(215, 0, 194, 0.4);
+  --feature5: rgba(205, 249, 217, 0.4);
+  --feature6: rgba(247, 247, 255, 0.4);
+  --feature7: rgba(255, 241, 209, 0.4);
+
+  /* Tags / Chips - Base Colors */
+  --tag1: rgba(191, 232, 255, 0.4);
+  --tag2: rgba(229, 229, 255, 0.4);
+  --tag3: rgba(222, 243, 255, 0.4);
+  --tag-turquoise: rgba(199, 237, 235, 0.4);
+  --tag-green-light: rgba(199, 237, 210, 0.4);
+  --tag-green: rgba(210, 255, 191, 0.4);
+  --tag-red: rgba(255, 191, 191, 0.4);
+  --tag-red-light: rgba(246, 203, 196, 0.4);
+  --tag-red-dark: rgba(229, 166, 166, 0.4);
+  --tag-pink: rgba(253, 224, 255, 0.4);
+  --tag-blue-light: rgba(215, 235, 246, 0.4);
+  --tag-blue: rgba(180, 219, 241, 0.4);
+  --tag-blue-dark: rgba(191, 213, 255, 0.4);
+  --tag-violet: rgba(212, 212, 240, 0.4);
+  --tag-yellow: rgba(255, 252, 191, 0.4);
+  --tag-orange: rgba(255, 241, 209, 0.4);
+  --tag-grey: rgba(240, 240, 240, 0.4);
+  --tag-white: var(--background3);
+
+  /* Tags / Chips - Hover States */
+  --tag1-hover: rgba(215, 235, 246, 0.4);
+  --tag2-hover: rgba(212, 212, 240, 0.4);
+  --tag3-hover: rgba(215, 235, 246, 0.4);
+  --tag-turquoise-hover: rgba(185, 227, 225, 0.4);
+  --tag-green-light-hover: rgba(199, 237, 210, 0.4);
+  --tag-green-hover: rgba(200, 247, 180, 0.4);
+  --tag-red-hover: rgba(246, 203, 196, 0.4);
+  --tag-red-light-hover: rgba(246, 203, 196, 0.4);
+  --tag-red-dark-hover: rgba(229, 166, 166, 0.4);
+  --tag-pink-hover: rgba(236, 207, 238, 0.4);
+  --tag-blue-light-hover: rgba(215, 235, 246, 0.4);
+  --tag-blue-hover: rgba(180, 219, 241, 0.4);
+  --tag-blue-dark-hover: rgba(179, 200, 240, 0.4);
+  --tag-violet-hover: rgba(212, 212, 240, 0.4);
+  --tag-yellow-hover: rgba(241, 237, 171, 0.4);
+  --tag-orange-hover: rgba(245, 234, 207, 0.4);
+  --tag-grey-hover: rgba(240, 240, 240, 0.4);
+  --tag-white-hover: var(--background3);
+
+  /* Tags / Chips - Disable States */
+  --tag1-disable: rgba(239, 249, 255, 0.4);
+  --tag2-disable: rgba(242, 242, 255, 0.4);
+  --tag-grey-disable: rgba(250, 250, 250, 0.4);
+  --tag-orange-disable: rgba(255, 248, 232, 0.4);
+  --tag-yellow-disable: rgba(255, 253, 223, 0.4);
+  --tag-blue-light-disable: rgba(239, 249, 255, 0.4);
+  --tag-blue-disable: rgba(223, 243, 255, 0.4);
+  --tag-blue-dark-disable: rgba(223, 234, 255, 0.4);
+  --tag-violet-disable: rgba(242, 242, 255, 0.4);
+  --tag-pink-disable: rgba(254, 239, 255, 0.4);
+  --tag-red-disable: rgba(255, 241, 239, 0.4);
+  --tag-red-dark-disable: rgba(255, 223, 223, 0.4);
+  --tag-green-disable: rgba(233, 255, 223, 0.4);
+  --tag-green-light-disable: rgba(230, 252, 236, 0.4);
+  --tag-turquoise-disable: rgba(227, 246, 245, 0.4);
+
+  /* Tags / Chips - Text Colors */
+  --tag-brown-text: rgba(159, 95, 0, 0.4);
+  --tag-blue-light-text: var(--feature2);
+  --tag-blue-text: rgba(17, 106, 211, 0.4);
+  --tag-blue-dark-text: rgba(74, 66, 216, 0.4);
+  --tag-violet-text: rgba(122, 50, 255, 0.4);
+  --tag-pink-text: rgba(191, 0, 172, 0.4);
+  --tag-red-dark-text: rgba(164, 46, 34, 0.4);
+  --tag-green-text: rgba(20, 105, 24, 0.4);
+
+  /* Tags / Chips - Text Disable Colors */
+  --tag-green-text-disable: rgba(115, 157, 117, 0.4);
+  --tag-red-dark-text-disable: rgba(209, 150, 144, 0.4);
+  --tag-pink-text-disable: rgba(223, 128, 213, 0.4);
+  --tag-violet-text-disable: rgba(188, 152, 255, 0.4);
+  --tag-blue-dark-text-disable: rgba(164, 160, 235, 0.4);
+  --tag-brown-text-disable: rgba(207, 175, 128, 0.4);
+  --tag-blue-text-disable: rgba(162, 205, 255, 0.4);
+
+  /* Neutral Colors - Text */
+  --text1: #000000;
+  --text2: #5f5f5f;
+  --text3: #404040;
+  --text4: #ffffff;
+
+  /* Neutral Colors - Disable */
+  --disable-primary: #b7b7b7;
+  --disable-secondary: #f4f4f4;
+  --disable-tertiary: #f9f9f9;
+  --text-disable1: #ffffff;
+  --text-disable2: #b7b7b7;
+  --text-disable3: #858585;
+  --icons-stroke-disable: #e1e1e1;
+
+  /* Background Colors */
+  --background1: #f5f5f5;
+  --background2: #fafafa;
+  --background3: #f9f9f9;
+  --background4: #ffffff;
+  --background5: #f5f5f5;
+  --overlay-background: rgba(0, 0, 0, 0.5);
+
+  /* Stroke Colors */
+  --stroke1: #dddddd;
+  --stroke2: #f0f0f0;
+  --icons-stroke: #c1c1c1;
+
+  /* Radius */
+  --radius: 4px;
+  --button-radius: 6px;
+
+  /* Shadows */
+  --sidebarShadow: linear-gradient(270deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.07) 85%, rgba(0, 0, 0, 0.07) 100%);
+  --tableStickyShadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  --popover-shadow: 0px 4px 15px 0px rgba(0, 0, 0, 0.1);
+  --admin-menu-item-shadow: 0px 4px 15px 0px rgba(0, 0, 0, 0.1);
+  --scroll-inset-shadow-top: inset 0 8px 8px -8px rgba(0, 0, 0, 0.1);
+  --scroll-inset-shadow-bottom: inset 0 -8px 8px -8px rgba(0, 0, 0, 0.1);
+
+  --border-color: #d9d9d9;
+  --calendar-dayoff-date: #898989;
+
+  /* Nuxt UI palette bridge */
+  --ui-radius: var(--button-radius);
+
+  --ui-color-neutral-50: #ffffff;
+  --ui-color-neutral-100: #fafafa;
+  --ui-color-neutral-200: #f5f5f5;
+  --ui-color-neutral-300: #ebebeb;
+  --ui-color-neutral-400: #d3d3d3;
+  --ui-color-neutral-500: #b7b7b7;
+  --ui-color-neutral-600: #9d9d9d;
+  --ui-color-neutral-700: #6f6f6f;
+  --ui-color-neutral-800: #5f5f5f;
+  --ui-color-neutral-900: #404040;
+  --ui-color-neutral-950: #1f1f1f;
+
+  --ui-color-primary-50: #f1f1f1;
+  --ui-color-primary-100: #ebebeb;
+  --ui-color-primary-200: #d3d3d3;
+  --ui-color-primary-300: #b7b7b7;
+  --ui-color-primary-400: #9d9d9d;
+  --ui-color-primary-500: #6f6f6f;
+  --ui-color-primary-600: #606060;
+  --ui-color-primary-700: #5f5f5f;
+  --ui-color-primary-800: #404040;
+  --ui-color-primary-900: #2f2f2f;
+  --ui-color-primary-950: #1f1f1f;
+
+  --ui-color-secondary-50: #f4f9ff;
+  --ui-color-secondary-100: #e6f2ff;
+  --ui-color-secondary-200: #cee6ff;
+  --ui-color-secondary-300: #abd3ff;
+  --ui-color-secondary-400: #7db7ff;
+  --ui-color-secondary-500: #3290ff;
+  --ui-color-secondary-600: #1f75e1;
+  --ui-color-secondary-700: #175cb4;
+  --ui-color-secondary-800: #15488b;
+  --ui-color-secondary-900: #143d72;
+  --ui-color-secondary-950: #10274a;
+
+  --ui-color-success-50: #f3fbf5;
+  --ui-color-success-100: #e5f6ea;
+  --ui-color-success-200: #cdecd5;
+  --ui-color-success-300: #a6dbb2;
+  --ui-color-success-400: #6ec083;
+  --ui-color-success-500: #2d9e46;
+  --ui-color-success-600: #25833a;
+  --ui-color-success-700: #1e6b30;
+  --ui-color-success-800: #195728;
+  --ui-color-success-900: #154722;
+  --ui-color-success-950: #0f3118;
+
+  --ui-color-info-50: var(--ui-color-secondary-50);
+  --ui-color-info-100: var(--ui-color-secondary-100);
+  --ui-color-info-200: var(--ui-color-secondary-200);
+  --ui-color-info-300: var(--ui-color-secondary-300);
+  --ui-color-info-400: var(--ui-color-secondary-400);
+  --ui-color-info-500: var(--ui-color-secondary-500);
+  --ui-color-info-600: var(--ui-color-secondary-600);
+  --ui-color-info-700: var(--ui-color-secondary-700);
+  --ui-color-info-800: var(--ui-color-secondary-800);
+  --ui-color-info-900: var(--ui-color-secondary-900);
+  --ui-color-info-950: var(--ui-color-secondary-950);
+
+  --ui-color-warning-50: #fff9ef;
+  --ui-color-warning-100: #ffefd8;
+  --ui-color-warning-200: #ffe0b5;
+  --ui-color-warning-300: #ffd189;
+  --ui-color-warning-400: #ffbc57;
+  --ui-color-warning-500: #ffab2d;
+  --ui-color-warning-600: #d18620;
+  --ui-color-warning-700: #a86618;
+  --ui-color-warning-800: #845014;
+  --ui-color-warning-900: #6e4412;
+  --ui-color-warning-950: #472d0d;
+
+  --ui-color-error-50: #fff4f2;
+  --ui-color-error-100: #ffe7e4;
+  --ui-color-error-200: #ffcfc8;
+  --ui-color-error-300: #ffafa4;
+  --ui-color-error-400: #f58475;
+  --ui-color-error-500: #d17a70;
+  --ui-color-error-600: #b85f53;
+  --ui-color-error-700: #a42e22;
+  --ui-color-error-800: #85261d;
+  --ui-color-error-900: #6e2119;
+  --ui-color-error-950: #471510;
+
+  --ui-primary: var(--ui-color-primary-500);
+  --ui-secondary: var(--ui-color-secondary-500);
+  --ui-success: var(--ui-color-success-500);
+  --ui-info: var(--ui-color-info-500);
+  --ui-warning: var(--ui-color-warning-500);
+  --ui-error: var(--ui-color-error-700);
+
+  --ui-text-dimmed: var(--ui-color-neutral-400);
+  --ui-text-muted: var(--text2);
+  --ui-text-toned: var(--primary2);
+  --ui-text: var(--text3);
+  --ui-text-highlighted: var(--text1);
+  --ui-text-inverted: var(--text4);
+
+  --ui-bg: var(--background4);
+  --ui-bg-muted: var(--background2);
+  --ui-bg-elevated: var(--background3);
+  --ui-bg-accented: var(--background1);
+  --ui-bg-inverted: var(--text1);
+
+  --ui-border: var(--stroke1);
+  --ui-border-muted: var(--stroke2);
+  --ui-border-accented: var(--border-color);
+  --ui-border-inverted: var(--text1);
+
+  /* RGB tuples for custom component styles */
+  --color-bg: 255 255 255;
+  --color-bg-elevated: 249 249 249;
+  --color-border: 221 221 221;
+  --color-text-muted: 95 95 95;
+  --color-text-toned: 133 133 133;
+  --color-shadow: 0 0 0;
+  --color-success: 45 158 70;
+  --color-error: 164 46 34;
+}
+
+.dark {
+  /* Primary Colors */
+  --primary1: #5d5d5d;
+  --primary-base: #6f6f6f;
+  --primary2: #858585;
+  --primary3: #9d9d9d;
+  --primary4: #1a1a1a;
+  --primary5: #222222;
+  --primary6: #262626;
+
+  /* Secondary Colors - Calendar */
+  --feature1: rgba(154, 113, 23, 0.4);
+  --feature2: rgba(62, 131, 212, 0.4);
+  --feature3: rgba(45, 158, 70, 0.4);
+  --feature4: rgba(215, 0, 194, 0.4);
+  --feature5: rgba(205, 249, 217, 0.4);
+  --feature6: rgba(247, 247, 255, 0.4);
+
+  /* Tags / Chips - Base Colors */
+  --tag1: rgba(4, 43, 65, 0.4);
+  --tag2: rgba(35, 35, 73, 0.4);
+  --tag3: rgba(2, 57, 88, 0.4);
+  --tag-turquoise: rgba(24, 75, 71, 0.4);
+  --tag-green-light: rgba(24, 75, 38, 0.4);
+  --tag-green: rgba(25, 76, 3, 0.4);
+  --tag-red: rgba(90, 0, 0, 0.4);
+  --tag-red-light: rgba(81, 23, 13, 0.4);
+  --tag-red-dark: rgba(122, 14, 14, 0.4);
+  --tag-pink: rgba(53, 0, 56, 0.4);
+  --tag-blue-light: rgba(17, 68, 97, 0.4);
+  --tag-blue: rgba(13, 44, 61, 0.4);
+  --tag-blue-dark: rgba(0, 31, 90, 0.4);
+  --tag-violet: rgba(48, 48, 99, 0.4);
+  --tag-yellow: rgba(73, 70, 5, 0.4);
+  --tag-orange: rgba(109, 80, 14, 0.4);
+  --tag-grey: rgba(50, 50, 50, 0.4);
+  --tag-white: var(--background3);
+
+  /* Tags / Chips - Hover States */
+  --tag1-hover: rgba(17, 68, 97, 0.4);
+  --tag2-hover: rgba(48, 48, 99, 0.4);
+  --tag3-hover: rgba(17, 68, 97, 0.4);
+  --tag-turquoise-hover: rgba(35, 89, 85, 0.4);
+  --tag-green-light-hover: rgba(24, 75, 38, 0.4);
+  --tag-green-hover: rgba(37, 98, 11, 0.4);
+  --tag-red-hover: rgba(81, 23, 13, 0.4);
+  --tag-red-light-hover: rgba(81, 23, 13, 0.4);
+  --tag-red-dark-hover: rgba(122, 14, 14, 0.4);
+  --tag-pink-hover: rgba(64, 24, 67, 0.4);
+  --tag-blue-light-hover: rgba(17, 68, 97, 0.4);
+  --tag-blue-hover: rgba(13, 44, 61, 0.4);
+  --tag-blue-dark-hover: rgba(19, 47, 97, 0.4);
+  --tag-violet-hover: rgba(48, 48, 99, 0.4);
+  --tag-yellow-hover: rgba(106, 101, 18, 0.4);
+  --tag-orange-hover: rgba(109, 80, 14, 0.4);
+  --tag-grey-hover: rgba(50, 50, 50, 0.4);
+  --tag-white-hover: var(--background3);
+
+  /* Tags / Chips - Disable States */
+  --tag1-disable: rgba(3, 42, 66, 0.4);
+  --tag2-disable: rgba(28, 28, 37, 0.4);
+  --tag-grey-disable: var(--background4);
+  --tag-orange-disable: rgba(38, 32, 19, 0.4);
+  --tag-yellow-disable: rgba(106, 101, 18, 0.4);
+  --tag-blue-light-disable: rgba(3, 42, 66, 0.4);
+  --tag-blue-disable: rgba(0, 35, 57, 0.4);
+  --tag-blue-dark-disable: rgba(0, 20, 57, 0.4);
+  --tag-violet-disable: rgba(28, 28, 37, 0.4);
+  --tag-pink-disable: rgba(32, 19, 33, 0.4);
+  --tag-red-disable: rgba(41, 19, 19, 0.4);
+  --tag-red-dark-disable: rgba(33, 26, 24, 0.4);
+  --tag-green-disable: rgba(25, 38, 20, 0.4);
+  --tag-green-light-disable: rgba(25, 38, 20, 0.4);
+  --tag-turquoise-disable: rgba(25, 38, 37, 0.4);
+
+  /* Tags / Chips - Text Colors */
+  --tag-brown-text: rgba(238, 162, 48, 0.4);
+  --tag-blue-light-text: var(--feature2);
+  --tag-blue-text: rgba(45, 143, 255, 0.4);
+  --tag-blue-dark-text: rgba(128, 121, 255, 0.4);
+  --tag-violet-text: rgba(163, 114, 255, 0.4);
+  --tag-pink-text: rgba(234, 14, 212, 0.4);
+  --tag-red-dark-text: rgba(242, 95, 82, 0.4);
+  --tag-green-text: rgba(68, 171, 73, 0.4);
+
+  /* Tags / Chips - Text Disable Colors */
+  --tag-green-text-disable: rgba(36, 72, 34, 0.4);
+  --tag-red-dark-text-disable: rgba(95, 36, 30, 0.4);
+  --tag-pink-text-disable: rgba(108, 13, 99, 0.4);
+  --tag-violet-text-disable: rgba(74, 38, 140, 0.4);
+  --tag-blue-dark-text-disable: rgba(50, 46, 121, 0.4);
+  --tag-brown-text-disable: rgba(131, 94, 37, 0.4);
+  --tag-blue-text-disable: rgba(10, 58, 100, 0.4);
+
+  /* Neutral Colors - Text */
+  --text1: #ffffff;
+  --text2: #f0f0f0;
+  --text3: #dddddd;
+  --text4: #ffffff;
+
+  /* Neutral Colors - Disable */
+  --disable-primary: #404040;
+  --disable-secondary: #121212;
+  --disable-tertiary: #191919;
+  --text-disable1: #888888;
+  --text-disable2: #404040;
+  --text-disable3: #878787;
+  --icons-stroke-disable: #545454;
+
+  /* Background Colors */
+  --background1: #202020;
+  --background2: #111111;
+  --background3: #262626;
+  --background4: #191919;
+  --background5: #1f1f1f;
+  --overlay-background: rgba(255, 255, 255, 0.5);
+
+  /* Stroke Colors */
+  --stroke1: #2f2f2f;
+  --stroke2: #2f2f2f;
+  --icons-stroke: #acacac;
+
+  /* Shadows */
+  --sidebarShadow: linear-gradient(270deg, rgba(0, 0, 0, 0) 0%, #373737 85%, #373737 100%);
+  --tableStickyShadow: 0px 4px 15px 0px #15191f;
+  --popover-shadow: 0px 4px 15px 0px #15191f;
+  --admin-menu-item-shadow: 0px 4px 12px 0px rgba(119, 109, 109, 0.2);
+  --scroll-inset-shadow-top: inset 0 8px 8px -8px #15191f;
+  --scroll-inset-shadow-bottom: inset 0 -8px 8px -8px #15191f;
+  --calendar-dayoff-date: #898989;
+
+  /* Nuxt UI palette bridge */
+  --ui-color-neutral-50: #f0f0f0;
+  --ui-color-neutral-100: #dddddd;
+  --ui-color-neutral-200: #acacac;
+  --ui-color-neutral-300: #878787;
+  --ui-color-neutral-400: #5d5d5d;
+  --ui-color-neutral-500: #545454;
+  --ui-color-neutral-600: #404040;
+  --ui-color-neutral-700: #2f2f2f;
+  --ui-color-neutral-800: #262626;
+  --ui-color-neutral-900: #191919;
+  --ui-color-neutral-950: #111111;
+
+  --ui-color-primary-50: #2f2f2f;
+  --ui-color-primary-100: #373737;
+  --ui-color-primary-200: #404040;
+  --ui-color-primary-300: #5d5d5d;
+  --ui-color-primary-400: #6f6f6f;
+  --ui-color-primary-500: #858585;
+  --ui-color-primary-600: #9d9d9d;
+  --ui-color-primary-700: #b7b7b7;
+  --ui-color-primary-800: #d3d3d3;
+  --ui-color-primary-900: #ebebeb;
+  --ui-color-primary-950: #f1f1f1;
+
+  --ui-color-secondary-50: #1a2533;
+  --ui-color-secondary-100: #1f2d3d;
+  --ui-color-secondary-200: #25384a;
+  --ui-color-secondary-300: #2d4760;
+  --ui-color-secondary-400: #386789;
+  --ui-color-secondary-500: #3e83d4;
+  --ui-color-secondary-600: #4d9ae8;
+  --ui-color-secondary-700: #73b1f0;
+  --ui-color-secondary-800: #99c7f5;
+  --ui-color-secondary-900: #c0ddfa;
+  --ui-color-secondary-950: #e5f2fe;
+
+  --ui-color-success-50: #13261a;
+  --ui-color-success-100: #173022;
+  --ui-color-success-200: #1d3d2a;
+  --ui-color-success-300: #245436;
+  --ui-color-success-400: #2f7546;
+  --ui-color-success-500: #44ab49;
+  --ui-color-success-600: #66c96a;
+  --ui-color-success-700: #87d88b;
+  --ui-color-success-800: #abe7ad;
+  --ui-color-success-900: #cdf2ce;
+  --ui-color-success-950: #e8fae9;
+
+  --ui-color-info-50: var(--ui-color-secondary-50);
+  --ui-color-info-100: var(--ui-color-secondary-100);
+  --ui-color-info-200: var(--ui-color-secondary-200);
+  --ui-color-info-300: var(--ui-color-secondary-300);
+  --ui-color-info-400: var(--ui-color-secondary-400);
+  --ui-color-info-500: var(--ui-color-secondary-500);
+  --ui-color-info-600: var(--ui-color-secondary-600);
+  --ui-color-info-700: var(--ui-color-secondary-700);
+  --ui-color-info-800: var(--ui-color-secondary-800);
+  --ui-color-info-900: var(--ui-color-secondary-900);
+  --ui-color-info-950: var(--ui-color-secondary-950);
+
+  --ui-color-warning-50: #2b1f0f;
+  --ui-color-warning-100: #362713;
+  --ui-color-warning-200: #453318;
+  --ui-color-warning-300: #5a431d;
+  --ui-color-warning-400: #765a22;
+  --ui-color-warning-500: #9a7117;
+  --ui-color-warning-600: #b68a2e;
+  --ui-color-warning-700: #cfab5d;
+  --ui-color-warning-800: #e4c98d;
+  --ui-color-warning-900: #f0dfb5;
+  --ui-color-warning-950: #f8efdd;
+
+  --ui-color-error-50: #2b1715;
+  --ui-color-error-100: #361d19;
+  --ui-color-error-200: #45251f;
+  --ui-color-error-300: #5c3128;
+  --ui-color-error-400: #7a4034;
+  --ui-color-error-500: #a55346;
+  --ui-color-error-600: #c66c5c;
+  --ui-color-error-700: #f25f52;
+  --ui-color-error-800: #f58f84;
+  --ui-color-error-900: #f9b7b0;
+  --ui-color-error-950: #fdddd9;
+
+  --ui-primary: var(--ui-color-primary-500);
+  --ui-secondary: var(--ui-color-secondary-500);
+  --ui-success: var(--ui-color-success-500);
+  --ui-info: var(--ui-color-info-500);
+  --ui-warning: var(--ui-color-warning-500);
+  --ui-error: var(--ui-color-error-700);
+
+  --ui-text-dimmed: var(--ui-color-neutral-500);
+  --ui-text-muted: var(--ui-color-neutral-400);
+  --ui-text-toned: var(--ui-color-neutral-300);
+  --ui-text: var(--ui-color-neutral-200);
+  --ui-text-highlighted: var(--text1);
+  --ui-text-inverted: var(--ui-color-neutral-900);
+
+  --ui-bg: var(--background4);
+  --ui-bg-muted: var(--background5);
+  --ui-bg-elevated: var(--background3);
+  --ui-bg-accented: var(--background1);
+  --ui-bg-inverted: var(--text1);
+
+  --ui-border: var(--stroke1);
+  --ui-border-muted: var(--stroke2);
+  --ui-border-accented: var(--stroke2);
+  --ui-border-inverted: var(--text1);
+
+  /* RGB tuples for custom component styles */
+  --color-bg: 25 25 25;
+  --color-bg-elevated: 38 38 38;
+  --color-border: 47 47 47;
+  --color-text-muted: 221 221 221;
+  --color-text-toned: 240 240 240;
+  --color-shadow: 21 25 31;
+  --color-success: 68 171 73;
+  --color-error: 242 95 82;
+}

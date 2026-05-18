@@ -1,0 +1,29 @@
+﻿services:
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    ports:
+      - "${NUXT_PORT:-3000}:3000"
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-timeline}
+      POSTGRES_USER: ${POSTGRES_USER:-timeline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-timeline}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

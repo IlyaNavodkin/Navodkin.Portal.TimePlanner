@@ -1,0 +1,28 @@
+{
+  "name": "working-timeline",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "migrate": "node --experimental-strip-types server/db/migrate.ts",
+    "test:backend": "node scripts/run-backend-tests.mjs",
+    "smoke:frontend": "node scripts/smoke-check.mjs",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@infectoone/vue-ganttastic": "^2.3.2",
+    "@nuxt/ui": "^3.3.7",
+    "nuxt": "^3.21.5",
+    "pg": "^8.13.3",
+    "vis-timeline": "^8.5.1"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.108",
+    "@nuxt/kit": "^3.21.5",
+    "@types/node": "^25.8.0",
+    "@types/pg": "^8.20.0",
+    "typescript": "^5.4.0"
+  }
+}
