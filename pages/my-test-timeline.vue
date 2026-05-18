@@ -42,7 +42,7 @@ function buildDays(start: string, count: number): string[] {
   return result
 }
 
-const days = ref(buildDays("2026-01-01", 420))
+const days = ref(buildDays("2026-01-01", 730))
 const dayToIndex = computed(() => new Map(days.value.map((day, index) => [day, index])))
 
 const rows = ref<TimelineGridRowModel[]>([

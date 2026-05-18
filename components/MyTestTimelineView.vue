@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue"
+import { computed, nextTick, onMounted, ref, watch } from "vue"
 import { addIsoDays, getDaysFromIndexes, clampNumber, toIsoDateUtc } from "~/composables/my-test-timeline/useMyTimelineDate"
 import { useMyTimelineFilters } from "~/composables/my-test-timeline/useMyTimelineFilters"
 import { useMyTimelineHierarchy } from "~/composables/my-test-timeline/useMyTimelineHierarchy"
@@ -54,11 +54,15 @@ const props = withDefaults(
   defineProps<{
     days: string[]
     rows: TimelineGridRowModel[]
+    yearRangeStart?: number
+    yearRangeEnd?: number
     savingTimelineId?: string
     successTimelineId?: string
     errorTimelineId?: string
   }>(),
   {
+    yearRangeStart: 1990,
+    yearRangeEnd: 2030,
     savingTimelineId: "",
     successTimelineId: "",
     errorTimelineId: "",
@@ -75,7 +79,7 @@ const emit = defineEmits<{
 const LABEL_COLUMN_WIDTH = 320
 const LANE_HEIGHT = 38
 const PROJECT_ROW_HEIGHT = 42
-const YEAR_ALL_VALUE = "all"
+const CURRENT_YEAR = String(new Date().getUTCFullYear())
 const ZOOM_PRESETS: TimelineZoomPreset[] = ["1w", "1m", "3m", "1y"]
 const PX_PER_DAY_BY_ZOOM: Record<TimelineZoomPreset, number> = {
   "1w": 56,
@@ -89,7 +93,7 @@ const daysRef = computed(() => props.days)
 const selectedTimelineId = ref("")
 const graphScrollRef = ref<HTMLElement | null>(null)
 const activeZoomPreset = ref<TimelineZoomPreset>("1m")
-const selectedYear = ref(YEAR_ALL_VALUE)
+const selectedYear = ref(CURRENT_YEAR)
 const createModalOpen = ref(false)
 const createFormError = ref("")
 const createTargetRow = ref<TimelineGridRowModel | null>(null)
@@ -108,43 +112,65 @@ const editForm = ref<TimelineEditFormState>({
   startDay: "",
   endDay: "",
 })
+
+const normalizedYearRange = computed(() => {
+  const start = Number.isFinite(props.yearRangeStart) ? Math.trunc(props.yearRangeStart) : 1990
+  const end = Number.isFinite(props.yearRangeEnd) ? Math.trunc(props.yearRangeEnd) : 2030
+  return start <= end ? { start, end } : { start: end, end: start }
+})
+
 const yearOptions = computed(() => {
-  const years = new Set<string>()
-  for (const day of props.days) {
-    years.add(day.slice(0, 4))
+  const options: Array<{ label: string; value: string }> = []
+  for (let year = normalizedYearRange.value.start; year <= normalizedYearRange.value.end; year += 1) {
+    const value = String(year)
+    options.push({
+      label: value,
+      value,
+    })
+  }
+  return options
+})
+
+watch(normalizedYearRange, (range) => {
+  const next = Number.parseInt(selectedYear.value, 10)
+  if (!Number.isFinite(next)) {
+    selectedYear.value = String(range.start)
+    return
   }
 
-  const sortedYears = [...years].sort((left, right) => left.localeCompare(right))
-  return [
-    { label: "All years", value: YEAR_ALL_VALUE },
-    ...sortedYears.map((year) => ({
-      label: year,
-      value: year,
-    })),
-  ]
+  if (next < range.start) {
+    selectedYear.value = String(range.start)
+    return
+  }
+
+  if (next > range.end) {
+    selectedYear.value = String(range.end)
+  }
+}, { immediate: true })
+
+const selectedYearNumber = computed(() => {
+  const parsed = Number.parseInt(selectedYear.value, 10)
+  return Number.isFinite(parsed) ? parsed : new Date().getUTCFullYear()
 })
 
 const selectedYearBounds = computed((): { start: number; end: number } => {
-  if (selectedYear.value === YEAR_ALL_VALUE) {
-    return {
-      start: 0,
-      end: Math.max(0, props.days.length - 1),
-    }
-  }
-
-  const yearPrefix = `${selectedYear.value}-`
+  const targetYear = selectedYearNumber.value
   let start = -1
   let end = -1
 
   for (let index = 0; index < props.days.length; index += 1) {
-    if (!props.days[index]?.startsWith(yearPrefix)) {
+    const day = props.days[index]
+    if (!day) {
       continue
     }
 
-    if (start < 0) {
-      start = index
+    const year = Number.parseInt(day.slice(0, 4), 10)
+    if (year === targetYear) {
+      if (start < 0) {
+        start = index
+      }
+      end = index
     }
-    end = index
   }
 
   if (start < 0 || end < 0) {
@@ -237,6 +263,10 @@ function updateSelectedChargeId(value: string): void {
 }
 
 function updateSelectedYear(value: string): void {
+  if (!value) {
+    return
+  }
+
   selectedYear.value = value
 }
 
@@ -328,7 +358,7 @@ function submitEditDialog(): void {
   const startIndex = props.days.findIndex((day) => day === editForm.value.startDay)
   const endIndex = props.days.findIndex((day) => day === editForm.value.endDay)
   if (startIndex < 0 || endIndex < 0) {
-    editFormError.value = "Dates must be inside visible timeline range."
+    editFormError.value = "Invalid date range."
     return
   }
 
@@ -385,7 +415,7 @@ function submitCreateDialog(): void {
   const startIndex = props.days.findIndex((day) => day === createForm.value.startDay)
   const endIndex = props.days.findIndex((day) => day === createForm.value.endDay)
   if (startIndex < 0 || endIndex < 0) {
-    createFormError.value = "Dates must be inside visible timeline range."
+    createFormError.value = "Invalid date range."
     return
   }
 

@@ -26,6 +26,36 @@ const gridStyle = computed(() => ({
   gridTemplateColumns: `repeat(${props.visibleDays.length}, ${props.pxPerDay}px)`,
 }))
 
+const monthGroups = computed(() => {
+  const groups: Array<{ key: string; label: string; startIndex: number; endIndex: number }> = []
+  if (props.visibleDays.length === 0) {
+    return groups
+  }
+
+  let startIndex = 0
+  let currentKey = props.visibleDays[0]?.slice(0, 7) ?? ""
+
+  for (let index = 1; index <= props.visibleDays.length; index += 1) {
+    const key = props.visibleDays[index]?.slice(0, 7) ?? ""
+    if (index < props.visibleDays.length && key === currentKey) {
+      continue
+    }
+
+    const day = props.visibleDays[startIndex] ?? ""
+    groups.push({
+      key: `${currentKey}-${startIndex}`,
+      label: day ? formatMonthLabel(day) : currentKey,
+      startIndex,
+      endIndex: index - 1,
+    })
+
+    startIndex = index
+    currentKey = key
+  }
+
+  return groups
+})
+
 function shouldRenderMonth(index: number): boolean {
   if (index === 0) {
     return true
@@ -48,8 +78,20 @@ function shouldRenderMonth(index: number): boolean {
         v-for="(day, index) in visibleDays"
         :key="`month-${day}`"
         class="my-timeline-header__cell my-timeline-header__cell--month"
-      >
-        <span v-if="shouldRenderMonth(index)">{{ formatMonthLabel(day) }}</span>
+        :class="{ 'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0 }"
+      />
+      <div class="my-timeline-header__month-labels">
+        <div
+          v-for="group in monthGroups"
+          :key="group.key"
+          class="my-timeline-header__month-label"
+          :style="{
+            left: `${group.startIndex * pxPerDay}px`,
+            width: `${(group.endIndex - group.startIndex + 1) * pxPerDay}px`,
+          }"
+        >
+          {{ group.label }}
+        </div>
       </div>
     </div>
 
@@ -58,6 +100,7 @@ function shouldRenderMonth(index: number): boolean {
         v-for="(day, index) in visibleDays"
         :key="`day-${day}`"
         class="my-timeline-header__cell my-timeline-header__cell--day"
+        :class="{ 'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0 }"
       >
         <span v-if="index % labelStep === 0">{{ day.slice(8, 10) }}</span>
       </div>
@@ -75,6 +118,7 @@ function shouldRenderMonth(index: number): boolean {
 }
 
 .my-timeline-header__row--month {
+  position: relative;
   border-bottom: 1px solid var(--ui-border);
   background: var(--ui-bg-accented);
 }
@@ -85,7 +129,6 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__cell {
   min-width: 0;
-  border-right: 1px solid var(--ui-border-muted);
   color: var(--ui-text-toned);
   font-size: 11px;
   text-align: center;
@@ -97,8 +140,28 @@ function shouldRenderMonth(index: number): boolean {
   padding-top: 4px;
 }
 
+.my-timeline-header__month-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.my-timeline-header__month-label {
+  position: absolute;
+  top: 4px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--ui-text-toned);
+  white-space: nowrap;
+}
+
 .my-timeline-header__cell--day {
   min-height: 30px;
   padding-top: 6px;
+  border-right: 1px solid var(--ui-border-muted);
+}
+
+.my-timeline-header__cell--month-boundary {
+  border-left: 1px solid var(--ui-border-muted);
 }
 </style>

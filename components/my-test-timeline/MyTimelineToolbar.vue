@@ -133,6 +133,6 @@ const emit = defineEmits<{
 }
 
 .my-timeline-toolbar__select--year {
-  min-width: 180px;
+  min-width: 190px;
 }
 </style>

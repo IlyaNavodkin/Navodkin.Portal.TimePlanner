@@ -48,6 +48,27 @@ const visibleDayIndexes = computed(() => {
   }
   return result
 })
+const monthBoundaryIndexes = computed(() => {
+  const result: number[] = []
+
+  for (const dayIndex of visibleDayIndexes.value) {
+    if (dayIndex <= props.viewStartIndex) {
+      continue
+    }
+
+    const currentDay = props.days[dayIndex]
+    const previousDay = props.days[dayIndex - 1]
+    if (!currentDay || !previousDay) {
+      continue
+    }
+
+    if (currentDay.slice(0, 7) !== previousDay.slice(0, 7)) {
+      result.push(dayIndex)
+    }
+  }
+
+  return result
+})
 const occupiedDayIndexes = computed(() => {
   const occupied = new Set<number>()
   const fromIndex = props.viewStartIndex
@@ -188,6 +209,14 @@ onBeforeUnmount(() => {
       :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
     >
       <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
+      <div class="my-timeline-charge-row__month-boundaries">
+        <div
+          v-for="dayIndex in monthBoundaryIndexes"
+          :key="`month-track-${row.id}-${dayIndex}`"
+          class="my-timeline-charge-row__month-boundary"
+          :style="{ left: `${(dayIndex - viewStartIndex) * pxPerDay}px` }"
+        />
+      </div>
       <div class="my-timeline-charge-row__create-layer">
         <div
           v-for="dayIndex in visibleDayIndexes"
@@ -248,6 +277,14 @@ onBeforeUnmount(() => {
         :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
       >
         <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
+        <div class="my-timeline-charge-row__month-boundaries">
+          <div
+            v-for="dayIndex in monthBoundaryIndexes"
+            :key="`month-full-${row.id}-${dayIndex}`"
+            class="my-timeline-charge-row__month-boundary"
+            :style="{ left: `${(dayIndex - viewStartIndex) * pxPerDay}px` }"
+          />
+        </div>
         <div class="my-timeline-charge-row__create-layer">
           <div
             v-for="dayIndex in visibleDayIndexes"
@@ -367,6 +404,21 @@ onBeforeUnmount(() => {
 .my-timeline-charge-row__grid-bg {
   position: absolute;
   inset: 0;
+}
+
+.my-timeline-charge-row__month-boundaries {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.my-timeline-charge-row__month-boundary {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px solid var(--ui-border-muted);
 }
 
 .my-timeline-charge-row__create-layer {
