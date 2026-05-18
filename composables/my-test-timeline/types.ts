@@ -1,10 +1,16 @@
 export interface TimelineGridBlockModel {
   id: string
+  employeeExternalId: string
   employeeName: string
   comment?: string
   startIndex: number
   endIndex: number
   lane: number
+}
+
+export interface TimelineEmployeeModel {
+  id: string
+  name: string
 }
 
 export interface TimelineGridRowModel {
@@ -29,7 +35,7 @@ export interface TimelineCreatePayloadModel {
   day: string
   startDay?: string
   endDay?: string
-  employeeName?: string
+  employeeExternalId?: string
   comment?: string
 }
 
@@ -40,7 +46,7 @@ export interface TimelineResizePayloadModel {
 
 export interface TimelineUpdatePayloadModel {
   timelineId: string
-  employeeName: string
+  employeeExternalId: string
   comment: string
   startDay: string
   endDay: string

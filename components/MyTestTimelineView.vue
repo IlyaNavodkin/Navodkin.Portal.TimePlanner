@@ -11,6 +11,7 @@ import MyTimelineChargeRow from "~/components/my-test-timeline/MyTimelineChargeR
 import type {
   TimelineBarCommitModel,
   TimelineCreatePayloadModel,
+  TimelineEmployeeModel,
   TimelineGridBlockModel,
   TimelineGridRowModel,
   TimelineResizePayloadModel,
@@ -37,14 +38,14 @@ interface TimelineRenderRowCharge {
 type TimelineRenderRow = TimelineRenderRowProject | TimelineRenderRowCharge
 
 interface TimelineEditFormState {
-  employeeName: string
+  employeeExternalId: string
   comment: string
   startDay: string
   endDay: string
 }
 
 interface TimelineCreateFormState {
-  employeeName: string
+  employeeExternalId: string
   comment: string
   startDay: string
   endDay: string
@@ -54,6 +55,7 @@ const props = withDefaults(
   defineProps<{
     days: string[]
     rows: TimelineGridRowModel[]
+    employees?: TimelineEmployeeModel[]
     yearRangeStart?: number
     yearRangeEnd?: number
     savingTimelineId?: string
@@ -63,6 +65,7 @@ const props = withDefaults(
   {
     yearRangeStart: 1990,
     yearRangeEnd: 2030,
+    employees: () => [],
     savingTimelineId: "",
     successTimelineId: "",
     errorTimelineId: "",
@@ -98,7 +101,7 @@ const createModalOpen = ref(false)
 const createFormError = ref("")
 const createTargetRow = ref<TimelineGridRowModel | null>(null)
 const createForm = ref<TimelineCreateFormState>({
-  employeeName: "",
+  employeeExternalId: "",
   comment: "",
   startDay: "",
   endDay: "",
@@ -107,11 +110,18 @@ const editModalOpen = ref(false)
 const editFormError = ref("")
 const editTimelineId = ref("")
 const editForm = ref<TimelineEditFormState>({
-  employeeName: "",
+  employeeExternalId: "",
   comment: "",
   startDay: "",
   endDay: "",
 })
+
+const employeeOptions = computed(() =>
+  props.employees.map((employee) => ({
+    label: employee.name,
+    value: employee.id,
+  })),
+)
 
 const normalizedYearRange = computed(() => {
   const start = Number.isFinite(props.yearRangeStart) ? Math.trunc(props.yearRangeStart) : 1990
@@ -361,7 +371,7 @@ function openEditDialog(timelineId: string): void {
   editTimelineId.value = timelineId
   editFormError.value = ""
   editForm.value = {
-    employeeName: hit.block.employeeName,
+    employeeExternalId: hit.block.employeeExternalId,
     comment: hit.block.comment ?? "",
     startDay,
     endDay,
@@ -380,8 +390,8 @@ function submitEditDialog(): void {
     return
   }
 
-  const employeeName = editForm.value.employeeName.trim()
-  if (!employeeName) {
+  const employeeExternalId = editForm.value.employeeExternalId.trim()
+  if (!employeeExternalId) {
     editFormError.value = "Employee is required."
     return
   }
@@ -400,7 +410,7 @@ function submitEditDialog(): void {
 
   emit("update", {
     timelineId,
-    employeeName,
+    employeeExternalId,
     comment: editForm.value.comment.trim(),
     startDay: editForm.value.startDay,
     endDay: editForm.value.endDay,
@@ -417,8 +427,11 @@ function openCreateDialog(payload: TimelineCreatePayloadModel): void {
 
   createTargetRow.value = payload.row
   createFormError.value = ""
+  const defaultEmployeeExternalId = payload.employeeExternalId
+    ?? employeeOptions.value[0]?.value
+    ?? ""
   createForm.value = {
-    employeeName: "",
+    employeeExternalId: defaultEmployeeExternalId,
     comment: "",
     startDay,
     endDay: endDayCandidate > lastDay ? lastDay : endDayCandidate,
@@ -437,8 +450,8 @@ function submitCreateDialog(): void {
     return
   }
 
-  const employeeName = createForm.value.employeeName.trim()
-  if (!employeeName) {
+  const employeeExternalId = createForm.value.employeeExternalId.trim()
+  if (!employeeExternalId) {
     createFormError.value = "Employee is required."
     return
   }
@@ -460,7 +473,7 @@ function submitCreateDialog(): void {
     day: createForm.value.startDay,
     startDay: createForm.value.startDay,
     endDay: createForm.value.endDay,
-    employeeName,
+    employeeExternalId,
     comment: createForm.value.comment.trim(),
   })
 
@@ -698,7 +711,14 @@ onMounted(() => {
           </div>
 
           <UFormField label="Employee">
-            <UInput v-model="createForm.employeeName" placeholder="Employee name" />
+            <USelectMenu
+              v-model="createForm.employeeExternalId"
+              :items="employeeOptions"
+              value-key="value"
+              label-key="label"
+              search-input
+              placeholder="Select employee"
+            />
           </UFormField>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -731,7 +751,14 @@ onMounted(() => {
           <UAlert v-if="editFormError" color="error" variant="soft" :description="editFormError" />
 
           <UFormField label="Employee">
-            <UInput v-model="editForm.employeeName" placeholder="Employee name" />
+            <USelectMenu
+              v-model="editForm.employeeExternalId"
+              :items="employeeOptions"
+              value-key="value"
+              label-key="label"
+              search-input
+              placeholder="Select employee"
+            />
           </UFormField>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

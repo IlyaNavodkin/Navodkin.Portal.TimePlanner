@@ -3,6 +3,7 @@ import { computed, ref } from "vue"
 import { addIsoDays } from "~/composables/my-test-timeline/useMyTimelineDate"
 import type {
   TimelineCreatePayloadModel,
+  TimelineEmployeeModel,
   TimelineGridBlockModel,
   TimelineGridRowModel,
   TimelineUpdatePayloadModel,
@@ -27,15 +28,32 @@ function buildDaysForYearRange(startYear: number, endYear: number): string[] {
 const YEAR_RANGE_START = 1990
 const YEAR_RANGE_END = 2030
 const BASE_DAY = "2026-01-01"
+const employees = ref<TimelineEmployeeModel[]>([
+  { id: "emp-1", name: "Alice" },
+  { id: "emp-2", name: "Bob" },
+  { id: "emp-3", name: "Carol" },
+  { id: "emp-4", name: "David" },
+  { id: "emp-5", name: "Elena" },
+  { id: "emp-6", name: "Frank" },
+])
+const employeeNameById = computed(() => new Map(employees.value.map((item) => [item.id, item.name])))
 
 const days = ref(buildDaysForYearRange(YEAR_RANGE_START, YEAR_RANGE_END))
 const baseDayIndex = days.value.findIndex((day) => day === BASE_DAY)
 const dayToIndex = computed(() => new Map(days.value.map((day, index) => [day, index])))
 
-function fromBaseOffsets(id: string, employeeName: string, startOffset: number, endOffset: number, lane: number): TimelineGridBlockModel {
+function fromBaseOffsets(
+  id: string,
+  employeeExternalId: string,
+  employeeName: string,
+  startOffset: number,
+  endOffset: number,
+  lane: number,
+): TimelineGridBlockModel {
   const safeBaseDayIndex = baseDayIndex < 0 ? 0 : baseDayIndex
   return {
     id,
+    employeeExternalId,
     employeeName,
     startIndex: safeBaseDayIndex + startOffset,
     endIndex: safeBaseDayIndex + endOffset,
@@ -53,8 +71,8 @@ const rows = ref<TimelineGridRowModel[]>([
     label: "Apollo / Frontend",
     lanesCount: 2,
     blocks: [
-      fromBaseOffsets("tl-1", "Alice", 8, 26, 0),
-      fromBaseOffsets("tl-2", "Bob", 20, 44, 1),
+      fromBaseOffsets("tl-1", "emp-1", "Alice", 8, 26, 0),
+      fromBaseOffsets("tl-2", "emp-2", "Bob", 20, 44, 1),
     ],
   },
   {
@@ -66,8 +84,8 @@ const rows = ref<TimelineGridRowModel[]>([
     label: "Apollo / Backend",
     lanesCount: 2,
     blocks: [
-      fromBaseOffsets("tl-3", "Carol", 52, 83, 0),
-      fromBaseOffsets("tl-4", "David", 76, 112, 1),
+      fromBaseOffsets("tl-3", "emp-3", "Carol", 52, 83, 0),
+      fromBaseOffsets("tl-4", "emp-4", "David", 76, 112, 1),
     ],
   },
   {
@@ -78,7 +96,7 @@ const rows = ref<TimelineGridRowModel[]>([
     chargeName: "QA",
     label: "Mercury / QA",
     lanesCount: 1,
-    blocks: [fromBaseOffsets("tl-5", "Elena", 140, 168, 0)],
+    blocks: [fromBaseOffsets("tl-5", "emp-5", "Elena", 140, 168, 0)],
   },
   {
     id: "p3::c4",
@@ -88,7 +106,7 @@ const rows = ref<TimelineGridRowModel[]>([
     chargeName: "DevOps",
     label: "Orion / DevOps",
     lanesCount: 1,
-    blocks: [fromBaseOffsets("tl-6", "Frank", 210, 248, 0)],
+    blocks: [fromBaseOffsets("tl-6", "emp-6", "Frank", 210, 248, 0)],
   },
 ])
 
@@ -169,7 +187,8 @@ function handleCreate(payload: TimelineCreatePayloadModel): void {
   const lane = findLaneForRange(row, dayIndex, endIndex)
   row.blocks.push({
     id: `tl-${nextTimelineSequence}`,
-    employeeName: payload.employeeName?.trim() || `Auto ${nextTimelineSequence}`,
+    employeeExternalId: payload.employeeExternalId ?? "emp-1",
+    employeeName: employeeNameById.value.get(payload.employeeExternalId ?? "emp-1") ?? `Auto ${nextTimelineSequence}`,
     comment: payload.comment?.trim() || "",
     startIndex: dayIndex,
     endIndex,
@@ -192,7 +211,8 @@ function handleUpdate(payload: TimelineUpdatePayloadModel): void {
     return
   }
 
-  target.block.employeeName = payload.employeeName
+  target.block.employeeExternalId = payload.employeeExternalId
+  target.block.employeeName = employeeNameById.value.get(payload.employeeExternalId) ?? target.block.employeeName
   target.block.comment = payload.comment
   target.block.startIndex = startIndex
   target.block.endIndex = endIndex
@@ -287,6 +307,7 @@ async function handleResize(payload: { timelineId: string; days: string[] }): Pr
     <MyTestTimelineView
       :days="days"
       :rows="rows"
+      :employees="employees"
       :year-range-start="YEAR_RANGE_START"
       :year-range-end="YEAR_RANGE_END"
       :saving-timeline-id="savingTimelineId"

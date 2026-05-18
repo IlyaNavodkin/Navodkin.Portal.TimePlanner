@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 
 import type { CreateTimelineRequest, TimelineItemDto, UpdateTimelineRequest } from "~/features/timeline/types"
+import type { TimelineCreatePayloadModel, TimelineUpdatePayloadModel } from "~/composables/my-test-timeline/types"
 
 interface TimelineGridBlockModel {
   id: string
+  employeeExternalId: string
   employeeName: string
   startIndex: number
   endIndex: number
@@ -24,15 +26,11 @@ interface TimelineGridRowModel {
 
 interface TimelineBlockLayout {
   id: string
+  employeeExternalId: string
   employeeName: string
   startIndex: number
   endIndex: number
   lane: number
-}
-
-interface CreateTimelineTrigger {
-  row: TimelineGridRowModel
-  day: string
 }
 
 const { state, actions } = useTimelinePlanner()
@@ -48,7 +46,6 @@ const timelines = state.timelines
 
 const timelinesLoading = state.timelinesLoading
 const managersLoading = state.managersLoading
-const employeesLoading = state.employeesLoading
 
 const managersError = state.managersError
 const employeesError = state.employeesError
@@ -57,33 +54,11 @@ const chargesError = state.chargesError
 const timelinesError = state.timelinesError
 
 const isBootstrapped = ref(false)
-const createModalOpen = ref(false)
-const editModalOpen = ref(false)
-const createSubmitting = ref(false)
-const editSubmitting = ref(false)
 const deleteSubmittingId = ref("")
 const resizeSavingTimelineId = ref("")
 const resizeSuccessTimelineId = ref("")
 const resizeErrorTimelineId = ref("")
 const resizeErrorToastId = ref<string | number | null>(null)
-const formErrorMessage = ref("")
-
-const createForm = reactive({
-  projectExternalId: "",
-  chargeExternalId: "",
-  employeeExternalId: "",
-  startDate: "",
-  endDate: "",
-  comment: "",
-})
-
-const editForm = reactive({
-  id: "",
-  employeeExternalId: "",
-  startDate: "",
-  endDate: "",
-  comment: "",
-})
 
 function parseIsoDate(isoDate: string): Date | null {
   if (!isoDate) {
@@ -158,6 +133,7 @@ function getTimelineLayouts(
 
       return {
         id: timeline.id,
+        employeeExternalId: timeline.employeeExternalId,
         employeeName: timeline.employeeName,
         startIndex: Math.min(...indexes),
         endIndex: Math.max(...indexes),
@@ -215,13 +191,6 @@ const yearOptions = computed(() => {
   }
   return options
 })
-
-const employeeOptions = computed(() =>
-  employees.value.map((item) => ({
-    label: item.name,
-    value: item.id,
-  })),
-)
 
 const dayList = computed(() => {
   const range = getYearRange(year.value)
@@ -298,143 +267,115 @@ const timelineRows = computed<TimelineGridRowModel[]>(() => {
   return rows
 })
 
-function resetCreateForm(): void {
-  const range = getYearRange(year.value)
-  createForm.projectExternalId = projects.value[0]?.id ?? ""
-  createForm.chargeExternalId = charges.value[0]?.id ?? ""
-  createForm.employeeExternalId = employees.value[0]?.id ?? ""
-  createForm.startDate = range.from
-  createForm.endDate = range.from
-  createForm.comment = ""
-}
-
-function openCreateModal(payload?: CreateTimelineTrigger): void {
-  resetCreateForm()
-
-  if (payload) {
-    createForm.projectExternalId = payload.row.projectExternalId
-    createForm.chargeExternalId = payload.row.chargeExternalId
-    createForm.startDate = payload.day
-    createForm.endDate = payload.day
-  }
-
-  if (!createForm.chargeExternalId && createForm.projectExternalId) {
-    createForm.chargeExternalId =
-      charges.value.find((item) => item.projectId === createForm.projectExternalId)?.id ?? ""
-  }
-
-  formErrorMessage.value = ""
-  createModalOpen.value = true
-}
-
-function openEditModal(timelineId: string): void {
-  const timeline = timelineById.value.get(timelineId)
-  if (!timeline) {
-    return
-  }
-
-  const sortedDays = sortIsoDays(timeline.days)
-  const yearRange = getYearRange(year.value)
-  editForm.id = timeline.id
-  editForm.employeeExternalId = timeline.employeeExternalId
-  editForm.startDate = sortedDays[0] ?? yearRange.from
-  editForm.endDate = sortedDays[sortedDays.length - 1] ?? yearRange.to
-  editForm.comment = ""
-  formErrorMessage.value = ""
-  editModalOpen.value = true
-}
-
-async function submitCreateTimeline(): Promise<void> {
-  if (createSubmitting.value) {
-    return
-  }
-
-  formErrorMessage.value = ""
-  const days = getDaysInRange(createForm.startDate, createForm.endDate)
-
+async function handleCreateFromTimelineView(payload: TimelineCreatePayloadModel): Promise<void> {
   if (!managerId.value) {
-    formErrorMessage.value = "Выберите руководителя."
+    toast.add({
+      title: "Select manager first",
+      color: "error",
+      duration: 2200,
+    })
     return
   }
 
-  if (!createForm.projectExternalId || !createForm.chargeExternalId || !createForm.employeeExternalId) {
-    formErrorMessage.value = "Заполните проект, чардж и сотрудника."
-    return
-  }
-
+  const startDay = payload.startDay ?? payload.day
+  const endDay = payload.endDay ?? payload.day
+  const days = getDaysInRange(startDay, endDay)
   if (days.length === 0) {
-    formErrorMessage.value = "Укажите валидный диапазон дней."
+    toast.add({
+      title: "Invalid date range",
+      color: "error",
+      duration: 2200,
+    })
     return
   }
 
-  const payload: CreateTimelineRequest = {
-    projectExternalId: createForm.projectExternalId,
-    chargeExternalId: createForm.chargeExternalId,
-    managerExternalId: managerId.value,
-    employeeExternalId: createForm.employeeExternalId,
-    days,
-    comment: createForm.comment.trim() || undefined,
+  const employeeExternalId = payload.employeeExternalId?.trim() ?? ""
+  if (!employeeExternalId) {
+    toast.add({
+      title: "Employee is required",
+      color: "error",
+      duration: 2200,
+    })
+    return
   }
 
-  createSubmitting.value = true
+  const request: CreateTimelineRequest = {
+    projectExternalId: payload.row.projectExternalId,
+    chargeExternalId: payload.row.chargeExternalId,
+    managerExternalId: managerId.value,
+    employeeExternalId,
+    days,
+    comment: payload.comment?.trim() || undefined,
+  }
+
   try {
-    await actions.createTimeline(payload)
-    createModalOpen.value = false
+    await actions.createTimeline(request)
   } catch (error) {
-    formErrorMessage.value = error instanceof Error ? error.message : "Не удалось создать timeline."
-  } finally {
-    createSubmitting.value = false
+    toast.add({
+      title: "Failed to create timeline",
+      description: getErrorMessage(error),
+      color: "error",
+      duration: 2600,
+    })
   }
 }
 
-async function submitUpdateTimeline(): Promise<void> {
-  if (editSubmitting.value || !editForm.id) {
-    return
-  }
-
-  const timeline = timelineById.value.get(editForm.id)
+async function handleUpdateFromTimelineView(payload: TimelineUpdatePayloadModel): Promise<void> {
+  const timeline = timelineById.value.get(payload.timelineId)
   if (!timeline) {
     return
   }
 
-  formErrorMessage.value = ""
-  const payload: UpdateTimelineRequest = {}
-  const days = getDaysInRange(editForm.startDate, editForm.endDate)
+  const days = getDaysInRange(payload.startDay, payload.endDay)
   if (days.length === 0) {
-    formErrorMessage.value = "Укажите валидный диапазон дней."
+    toast.add({
+      title: "Invalid date range",
+      color: "error",
+      duration: 2200,
+    })
     return
   }
 
+  const employeeExternalId = payload.employeeExternalId.trim()
+  if (!employeeExternalId) {
+    toast.add({
+      title: "Employee is required",
+      color: "error",
+      duration: 2200,
+    })
+    return
+  }
+
+  const request: UpdateTimelineRequest = {}
   const currentDays = sortIsoDays(timeline.days)
   if (days.join("|") !== currentDays.join("|")) {
-    payload.days = days
+    request.days = days
   }
 
-  if (editForm.employeeExternalId && editForm.employeeExternalId !== timeline.employeeExternalId) {
-    payload.employeeExternalId = editForm.employeeExternalId
+  if (employeeExternalId !== timeline.employeeExternalId) {
+    request.employeeExternalId = employeeExternalId
   }
 
-  const comment = editForm.comment.trim()
-  if (comment) {
-    payload.comment = comment
+  const nextComment = payload.comment.trim()
+  if (nextComment) {
+    request.comment = nextComment
   }
 
-  if (Object.keys(payload).length === 0) {
-    formErrorMessage.value = "Нет изменений для сохранения."
+  if (Object.keys(request).length === 0) {
     return
   }
 
-  editSubmitting.value = true
   try {
-    await actions.updateTimeline(editForm.id, payload)
-    editModalOpen.value = false
+    await actions.updateTimeline(payload.timelineId, request)
   } catch (error) {
-    formErrorMessage.value = error instanceof Error ? error.message : "Не удалось обновить timeline."
-  } finally {
-    editSubmitting.value = false
+    toast.add({
+      title: "Failed to update timeline",
+      description: getErrorMessage(error),
+      color: "error",
+      duration: 2600,
+    })
   }
 }
-
 async function deleteTimeline(id: string): Promise<void> {
   if (!id || deleteSubmittingId.value) {
     return
@@ -548,7 +489,6 @@ watch(
 
 onMounted(async () => {
   await actions.loadInitial()
-  resetCreateForm()
   isBootstrapped.value = true
 })
 </script>
@@ -606,117 +546,20 @@ onMounted(async () => {
       "
     />
 
-    <TimelineGridVis
+    <MyTestTimelineView
       :days="dayList"
       :rows="timelineRows"
+      :employees="employees"
+      :year-range-start="year"
+      :year-range-end="year"
       :saving-timeline-id="resizeSavingTimelineId"
       :success-timeline-id="resizeSuccessTimelineId"
       :error-timeline-id="resizeErrorTimelineId"
-      @create="openCreateModal"
-      @edit="openEditModal"
+      @create="handleCreateFromTimelineView"
+      @update="handleUpdateFromTimelineView"
       @delete="deleteTimeline"
       @resize="resizeTimeline"
     />
-
-    <UModal v-model:open="createModalOpen" title="Add Timeline">
-      <template #body>
-        <div class="space-y-4">
-          <UAlert v-if="formErrorMessage" color="error" variant="soft" :description="formErrorMessage" />
-
-          <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <div class="text-sm">
-              <span class="text-muted">Project: </span>
-              <span class="font-medium text-highlighted">
-                {{ projectNameById.get(createForm.projectExternalId) ?? createForm.projectExternalId }}
-              </span>
-            </div>
-            <div class="text-sm">
-              <span class="text-muted">Charge: </span>
-              <span class="font-medium text-highlighted">
-                {{ chargeNameById.get(createForm.chargeExternalId) ?? createForm.chargeExternalId }}
-              </span>
-            </div>
-          </div>
-
-          <UFormField label="Employee">
-            <USelectMenu
-              v-model="createForm.employeeExternalId"
-              :items="employeeOptions"
-              value-key="value"
-              label-key="label"
-              search-input
-              :loading="employeesLoading"
-              placeholder="Select employee"
-            />
-          </UFormField>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Start date">
-              <UInput v-model="createForm.startDate" type="date" />
-            </UFormField>
-
-            <UFormField label="End date">
-              <UInput v-model="createForm.endDate" type="date" />
-            </UFormField>
-          </div>
-
-          <UFormField label="Comment (optional)">
-            <UTextarea v-model="createForm.comment" :rows="3" placeholder="Comment" />
-          </UFormField>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="flex w-full justify-end gap-2">
-          <UButton color="neutral" variant="ghost" @click="createModalOpen = false">Cancel</UButton>
-          <UButton color="primary" :loading="createSubmitting" @click="submitCreateTimeline">
-            Create
-          </UButton>
-        </div>
-      </template>
-    </UModal>
-
-    <UModal v-model:open="editModalOpen" title="Edit Timeline">
-      <template #body>
-        <div class="space-y-4">
-          <UAlert v-if="formErrorMessage" color="error" variant="soft" :description="formErrorMessage" />
-
-          <UFormField label="Employee">
-            <USelectMenu
-              v-model="editForm.employeeExternalId"
-              :items="employeeOptions"
-              value-key="value"
-              label-key="label"
-              search-input
-              :loading="employeesLoading"
-              placeholder="Select employee"
-            />
-          </UFormField>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Start date">
-              <UInput v-model="editForm.startDate" type="date" />
-            </UFormField>
-
-            <UFormField label="End date">
-              <UInput v-model="editForm.endDate" type="date" />
-            </UFormField>
-          </div>
-
-          <UFormField label="Comment (optional)">
-            <UTextarea v-model="editForm.comment" :rows="3" placeholder="Comment" />
-          </UFormField>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="flex w-full justify-end gap-2">
-          <UButton color="neutral" variant="ghost" @click="editModalOpen = false">Cancel</UButton>
-          <UButton color="primary" :loading="editSubmitting" @click="submitUpdateTimeline">
-            Update
-          </UButton>
-        </div>
-      </template>
-    </UModal>
   </div>
 </template>
+
