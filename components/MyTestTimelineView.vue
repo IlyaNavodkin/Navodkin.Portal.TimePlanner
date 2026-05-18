@@ -96,6 +96,7 @@ const daysRef = computed(() => props.days)
 const selectedTimelineId = ref("")
 const graphScrollRef = ref<HTMLElement | null>(null)
 const timelineHeaderWrapRef = ref<HTMLElement | null>(null)
+let timelineHeaderResizeObserver: ResizeObserver | null = null
 const activeZoomPreset = ref<TimelineZoomPreset>("1m")
 const selectedYear = ref(CURRENT_YEAR)
 const leftHeaderHeightPx = ref(68)
@@ -581,6 +582,26 @@ function syncLeftHeaderHeightWithTimelineHeader(): void {
   }
 }
 
+function bindTimelineHeaderResizeObserver(): void {
+  if (!import.meta.client) {
+    return
+  }
+
+  timelineHeaderResizeObserver?.disconnect()
+  timelineHeaderResizeObserver = null
+
+  const wrap = timelineHeaderWrapRef.value
+  if (!wrap) {
+    return
+  }
+
+  timelineHeaderResizeObserver = new ResizeObserver(() => {
+    syncLeftHeaderHeightWithTimelineHeader()
+  })
+
+  timelineHeaderResizeObserver.observe(wrap)
+}
+
 onMounted(() => {
   if (import.meta.client) {
     window.addEventListener("keydown", handleGlobalKeyDown)
@@ -588,6 +609,7 @@ onMounted(() => {
   }
 
   void nextTick(() => {
+    bindTimelineHeaderResizeObserver()
     syncLeftHeaderHeightWithTimelineHeader()
   })
   void panToToday()
@@ -600,13 +622,26 @@ onBeforeUnmount(() => {
 
   window.removeEventListener("keydown", handleGlobalKeyDown)
   window.removeEventListener("resize", syncLeftHeaderHeightWithTimelineHeader)
+  timelineHeaderResizeObserver?.disconnect()
+  timelineHeaderResizeObserver = null
 })
 
 watch([visibleDays, effectivePxPerDay], () => {
   void nextTick(() => {
+    bindTimelineHeaderResizeObserver()
     syncLeftHeaderHeightWithTimelineHeader()
   })
 })
+
+watch(
+  () => timelineHeaderWrapRef.value,
+  () => {
+    void nextTick(() => {
+      bindTimelineHeaderResizeObserver()
+      syncLeftHeaderHeightWithTimelineHeader()
+    })
+  },
+)
 </script>
 
 <template>
