@@ -14,7 +14,7 @@ const labelStep = computed(() => {
     return 1
   }
   if (props.activeZoomPreset === "1m") {
-    return 2
+    return 1
   }
   if (props.activeZoomPreset === "3m") {
     return 7
@@ -115,12 +115,12 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__row {
   display: grid;
+  border-bottom: 1px solid var(--ui-border);
 }
 
 .my-timeline-header__row--month {
   position: relative;
-  border-bottom: 1px solid var(--ui-border);
-  background: var(--ui-bg-accented);
+  background: var(--ui-bg-elevated);
 }
 
 .my-timeline-header__row--days {
@@ -148,11 +148,22 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__month-label {
   position: absolute;
-  top: 4px;
+  bottom: 0;
+  padding-top: 4px;
+  top: 0px;
+  box-sizing: border-box;
   text-align: center;
   font-size: 11px;
   color: var(--ui-text-toned);
   white-space: nowrap;
+}
+
+.my-timeline-header__month-label + .my-timeline-header__month-label {
+  border-left-color: var(--ui-border);
+}
+
+.my-timeline-header__month-label:nth-child(even) {
+  background: var(--ui-bg-accented) ;
 }
 
 .my-timeline-header__cell--day {
@@ -162,6 +173,6 @@ function shouldRenderMonth(index: number): boolean {
 }
 
 .my-timeline-header__cell--month-boundary {
-  border-left: 1px solid var(--ui-border-muted);
+  border-left: 1px solid var(--ui-border);
 }
 </style>

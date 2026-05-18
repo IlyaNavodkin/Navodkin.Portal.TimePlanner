@@ -179,19 +179,6 @@ const managerOptions = computed(() =>
   })),
 )
 
-const yearOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const options = [] as Array<{ label: string; value: number }>
-  for (let step = -2; step <= 2; step += 1) {
-    const value = currentYear + step
-    options.push({
-      label: String(value),
-      value,
-    })
-  }
-  return options
-})
-
 const dayList = computed(() => {
   const range = getYearRange(year.value)
   return getDaysInRange(range.from, range.to)
@@ -500,40 +487,51 @@ onMounted(async () => {
         <h1 class="text-xl font-semibold">Timeline Planner</h1>
       </template>
 
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <UFormField label="Manager">
-          <USelect
-            v-model="managerId"
-            :items="managerOptions"
-            value-key="value"
-            label-key="label"
-            :loading="managersLoading"
-            placeholder="Select manager"
-          />
-        </UFormField>
+      <div class="rounded-lg border border-default p-3">
+        <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          Input data
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <UFormField label="Manager">
+            <USelect
+              v-model="managerId"
+              :items="managerOptions"
+              value-key="value"
+              label-key="label"
+              :loading="managersLoading"
+              placeholder="Select manager"
+            />
+          </UFormField>
 
-        <UFormField label="Year">
-          <USelect
-            v-model="year"
-            :items="yearOptions"
-            value-key="value"
-            label-key="label"
-            placeholder="Select year"
-          />
-        </UFormField>
-
-        <div class="flex items-end">
-          <UButton
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-refresh-cw"
-            :loading="timelinesLoading"
-            @click="actions.loadTimeline()"
-          >
-            Refresh timeline
-          </UButton>
+          <div class="flex items-end">
+            <UButton
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-refresh-cw"
+              :loading="timelinesLoading"
+              @click="actions.loadTimeline()"
+            >
+              Refresh timeline
+            </UButton>
+          </div>
         </div>
       </div>
+
+      <MyTestTimelineView
+        class="mt-4"
+        :days="dayList"
+        :rows="timelineRows"
+        :employees="employees"
+        year-range-start="2000"
+        year-range-end="2030"
+        :saving-timeline-id="resizeSavingTimelineId"
+        :success-timeline-id="resizeSuccessTimelineId"
+        :error-timeline-id="resizeErrorTimelineId"
+        @create="handleCreateFromTimelineView"
+        @update="handleUpdateFromTimelineView"
+        @delete="deleteTimeline"
+        @resize="resizeTimeline"
+      />
     </UCard>
 
     <UAlert
@@ -546,20 +544,6 @@ onMounted(async () => {
       "
     />
 
-    <MyTestTimelineView
-      :days="dayList"
-      :rows="timelineRows"
-      :employees="employees"
-      :year-range-start="year"
-      :year-range-end="year"
-      :saving-timeline-id="resizeSavingTimelineId"
-      :success-timeline-id="resizeSuccessTimelineId"
-      :error-timeline-id="resizeErrorTimelineId"
-      @create="handleCreateFromTimelineView"
-      @update="handleUpdateFromTimelineView"
-      @delete="deleteTimeline"
-      @resize="resizeTimeline"
-    />
   </div>
 </template>
 

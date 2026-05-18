@@ -45,6 +45,17 @@ const currentEndIndex = computed(() => transientEndIndex.value ?? props.block.en
 const visibleStart = computed(() => Math.max(currentStartIndex.value, props.viewStartIndex))
 const visibleEnd = computed(() => Math.min(currentEndIndex.value, props.viewEndIndex))
 const isVisible = computed(() => visibleStart.value <= visibleEnd.value)
+const dragModeClass = computed(() => {
+  if (!dragState.value) {
+    return ""
+  }
+
+  if (dragState.value.mode === "move") {
+    return "my-timeline-bar--dragging-move"
+  }
+
+  return "my-timeline-bar--dragging-resize"
+})
 
 const barStyle = computed(() => {
   if (!isVisible.value) {
@@ -57,35 +68,13 @@ const barStyle = computed(() => {
   const right = (visibleEnd.value - props.viewStartIndex + 1) * props.pxPerDay
   const width = Math.max(8, right - left)
 
-  const projectHue = hashString(props.projectKey) % 360
-  const chargeHue = hashString(props.chargeKey) % 360
-
-  const borderColor = props.saving
-    ? "var(--ui-warning)"
-    : props.success
-      ? "var(--ui-success)"
-      : props.error
-        ? "var(--ui-error)"
-        : "var(--ui-border-accented)"
-
   return {
     left: `${left}px`,
     width: `${width}px`,
     top: `${props.topPx}px`,
     height: `${props.heightPx}px`,
-    borderColor,
-    background: `linear-gradient(120deg, hsla(${projectHue}, 70%, 78%, 0.95), hsla(${chargeHue}, 72%, 84%, 0.95))`,
   }
 })
-
-function hashString(value: string): number {
-  let hash = 0
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(index)
-    hash |= 0
-  }
-  return Math.abs(hash)
-}
 
 function startDrag(mode: DragMode, event: PointerEvent): void {
   dragState.value = {
@@ -99,10 +88,27 @@ function startDrag(mode: DragMode, event: PointerEvent): void {
   transientStartIndex.value = props.block.startIndex
   transientEndIndex.value = props.block.endIndex
   emit("select", props.block.id)
+  applyGlobalCursor(mode)
 
   window.addEventListener("pointermove", onPointerMove)
   window.addEventListener("pointerup", onPointerUp)
   window.addEventListener("pointercancel", onPointerCancel)
+}
+
+function applyGlobalCursor(mode: DragMode): void {
+  if (!import.meta.client) {
+    return
+  }
+
+  document.body.style.cursor = mode === "move" ? "grabbing" : "ew-resize"
+}
+
+function clearGlobalCursor(): void {
+  if (!import.meta.client) {
+    return
+  }
+
+  document.body.style.removeProperty("cursor")
 }
 
 function onBodyPointerDown(event: PointerEvent): void {
@@ -183,6 +189,7 @@ function finishDrag(pointerId: number): void {
   transientStartIndex.value = null
   transientEndIndex.value = null
   clearDragListeners()
+  clearGlobalCursor()
 
   if (nextStart === props.block.startIndex && nextEnd === props.block.endIndex) {
     return
@@ -215,6 +222,7 @@ function onContextMenu(event: MouseEvent): void {
 
 onBeforeUnmount(() => {
   clearDragListeners()
+  clearGlobalCursor()
 })
 </script>
 
@@ -222,12 +230,15 @@ onBeforeUnmount(() => {
   <div
     class="my-timeline-bar"
     data-no-pan="true"
-    :class="{
-      'my-timeline-bar--selected': selected,
-      'my-timeline-bar--saving': saving,
-      'my-timeline-bar--success': success,
-      'my-timeline-bar--error': error,
-    }"
+    :class="[
+      dragModeClass,
+      {
+        'my-timeline-bar--selected': selected,
+        'my-timeline-bar--saving': saving,
+        'my-timeline-bar--success': success,
+        'my-timeline-bar--error': error,
+      },
+    ]"
     :style="barStyle"
     @pointerdown.stop="onBodyPointerDown"
     @click.stop="emit('select', block.id)"
@@ -260,29 +271,42 @@ onBeforeUnmount(() => {
   display: flex;
   min-width: 8px;
   align-items: center;
-  border: 1px solid var(--ui-border-accented);
+  border: 1px solid var(--color-slate-600);
+  background: linear-gradient(120deg, var(--color-slate-700), var(--color-slate-800));
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(var(--color-shadow), 0.15);
-  color: var(--ui-text-highlighted);
+  color: #f8fafc; /* slate-50 */
   overflow: hidden;
   user-select: none;
+  cursor: pointer;
+}
+
+.my-timeline-bar--dragging-move {
+  cursor: grabbing;
+}
+
+.my-timeline-bar--dragging-resize {
+  cursor: ew-resize;
 }
 
 .my-timeline-bar--selected {
   z-index: 3;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-secondary) 36%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-indigo-600) 36%, transparent);
 }
 
 .my-timeline-bar--saving {
+  border-color: var(--color-amber-600);
   animation: my-timeline-bar-pulse 1.2s ease-in-out infinite;
 }
 
 .my-timeline-bar--success {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-success) 38%, transparent);
+  border-color: var(--color-emerald-600);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-emerald-600) 38%, transparent);
 }
 
 .my-timeline-bar--error {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-error) 38%, transparent);
+  border-color: var(--color-rose-600);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-rose-600) 38%, transparent);
 }
 
 .my-timeline-bar__handle {
@@ -311,7 +335,7 @@ onBeforeUnmount(() => {
 
 @keyframes my-timeline-bar-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ui-warning) 42%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-amber-600) 42%, transparent);
   }
   100% {
     box-shadow: 0 0 0 8px transparent;

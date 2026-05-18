@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { addIsoDays, getDaysFromIndexes, clampNumber, toIsoDateUtc } from "~/composables/my-test-timeline/useMyTimelineDate"
 import { useMyTimelineFilters } from "~/composables/my-test-timeline/useMyTimelineFilters"
 import { useMyTimelineHierarchy } from "~/composables/my-test-timeline/useMyTimelineHierarchy"
@@ -239,8 +239,6 @@ const {
   groupedRows,
   isProjectCollapsed,
   toggleProject,
-  collapseAllProjects,
-  expandAllProjects,
 } = useMyTimelineHierarchy(filteredRows)
 
 const {
@@ -252,10 +250,6 @@ const {
   visibleDays,
   basePxPerDay,
 })
-
-const timelinesCount = computed(() =>
-  filteredRows.value.reduce((sum, row) => sum + row.blocks.length, 0),
-)
 
 const renderRows = computed<TimelineRenderRow[]>(() => {
   const rows: TimelineRenderRow[] = []
@@ -561,37 +555,55 @@ function setZoomPreset(nextPreset: TimelineZoomPreset): void {
   activeZoomPreset.value = nextPreset
 }
 
+function handleGlobalKeyDown(event: KeyboardEvent): void {
+  if (event.key !== "Escape") {
+    return
+  }
+
+  if (!selectedTimelineId.value) {
+    return
+  }
+
+  selectedTimelineId.value = ""
+}
+
 onMounted(() => {
+  if (import.meta.client) {
+    window.addEventListener("keydown", handleGlobalKeyDown)
+  }
+
   void panToToday()
+})
+
+onBeforeUnmount(() => {
+  if (!import.meta.client) {
+    return
+  }
+
+  window.removeEventListener("keydown", handleGlobalKeyDown)
 })
 </script>
 
 <template>
-  <UCard class="my-test-timeline-view">
-    <template #header>
-      <MyTimelineToolbar
-        :project-options="projectOptions"
-        :charge-options="chargeOptions"
-        :year-options="yearOptions"
-        :selected-project-id="selectedProjectId"
-        :selected-charge-id="selectedChargeId"
-        :selected-year="selectedYear"
-        :active-zoom-preset="activeZoomPreset"
-        :projects-count="groupedRows.length"
-        :charges-count="filteredRows.length"
-        :timelines-count="timelinesCount"
-        @update:selected-project-id="updateSelectedProjectId"
-        @update:selected-charge-id="updateSelectedChargeId"
-        @update:selected-year="updateSelectedYear"
-        @reset-filters="resetFilters"
-        @set-zoom="setZoomPreset($event)"
-        @pan-left="panLeft"
-        @pan-right="panRight"
-        @pan-today="panToToday"
-        @expand-all="expandAllProjects"
-        @collapse-all="collapseAllProjects"
-      />
-    </template>
+  <div class="my-test-timeline-view">
+    <MyTimelineToolbar
+      class="my-test-timeline-view__toolbar"
+      :project-options="projectOptions"
+      :charge-options="chargeOptions"
+      :year-options="yearOptions"
+      :selected-project-id="selectedProjectId"
+      :selected-charge-id="selectedChargeId"
+      :selected-year="selectedYear"
+      :active-zoom-preset="activeZoomPreset"
+      @update:selected-project-id="updateSelectedProjectId"
+      @update:selected-charge-id="updateSelectedChargeId"
+      @update:selected-year="updateSelectedYear"
+      @reset-filters="resetFilters"
+      @set-zoom="setZoomPreset($event)"
+      @pan-left="panLeft"
+      @pan-right="panRight"
+      @pan-today="panToToday"
+    />
 
     <div v-if="days.length === 0" class="rounded-md border border-default px-4 py-6 text-sm text-muted">
       Set a valid date range.
@@ -601,8 +613,9 @@ onMounted(() => {
       No timeline rows for selected filters.
     </div>
 
-    <div v-else class="my-timeline-shell">
-      <div class="my-timeline-left">
+    <div v-else class="my-test-timeline-view__body">
+      <div class="my-timeline-shell">
+        <div class="my-timeline-left">
         <div class="my-timeline-left__header">
           <div class="text-xs font-semibold uppercase tracking-wide text-toned">Project / Charge</div>
           <div class="text-[11px] text-muted">Rows: {{ renderRows.length }}</div>
@@ -636,62 +649,57 @@ onMounted(() => {
             :error-timeline-id="errorTimelineId"
           />
         </template>
-      </div>
+        </div>
 
-      <div class="my-timeline-right">
-        <div
-          ref="graphScrollRef"
-          class="my-timeline-right__scroll"
-          @wheel="onWheelZoom"
-        >
-          <div class="my-timeline-right__canvas" :style="{ minWidth: `${rightCanvasMinWidthPx}px` }">
-            <MyTimelineHeader
-              :visible-days="visibleDays"
-              :px-per-day="effectivePxPerDay"
-              :active-zoom-preset="activeZoomPreset"
-            />
-
-            <template v-for="item in renderRows" :key="`right-${item.key}`">
-              <MyTimelineProjectRow
-                v-if="item.kind === 'project'"
-                mode="track"
-                :project-name="item.projectName"
-                :charges-count="item.chargesCount"
-                :collapsed="isProjectCollapsed(item.projectExternalId)"
-                :label-column-width="LABEL_COLUMN_WIDTH"
-                :row-height-px="item.rowHeightPx"
-              />
-
-              <MyTimelineChargeRow
-                v-else
-                mode="track"
-                :row="item.row"
-                :days="daysForRows"
-                :view-start-index="viewStartIndex"
-                :view-end-index="viewEndIndex"
+        <div class="my-timeline-right">
+          <div
+            ref="graphScrollRef"
+            class="my-timeline-right__scroll"
+            @wheel="onWheelZoom"
+          >
+            <div class="my-timeline-right__canvas" :style="{ minWidth: `${rightCanvasMinWidthPx}px` }">
+              <MyTimelineHeader
+                :visible-days="visibleDays"
                 :px-per-day="effectivePxPerDay"
-                :label-column-width="LABEL_COLUMN_WIDTH"
-                :lane-height="LANE_HEIGHT"
-                :selected-timeline-id="selectedTimelineId"
-                :saving-timeline-id="savingTimelineId"
-                :success-timeline-id="successTimelineId"
-                :error-timeline-id="errorTimelineId"
-                @create="openCreateDialog"
-                @resize="handleResizeCommit"
-                @edit="openEditDialog"
-                @delete="emit('delete', $event)"
-                @select="selectedTimelineId = $event"
+                :active-zoom-preset="activeZoomPreset"
               />
-            </template>
+
+              <template v-for="item in renderRows" :key="`right-${item.key}`">
+                <MyTimelineProjectRow
+                  v-if="item.kind === 'project'"
+                  mode="track"
+                  :project-name="item.projectName"
+                  :charges-count="item.chargesCount"
+                  :collapsed="isProjectCollapsed(item.projectExternalId)"
+                  :label-column-width="LABEL_COLUMN_WIDTH"
+                  :row-height-px="item.rowHeightPx"
+                />
+
+                <MyTimelineChargeRow
+                  v-else
+                  mode="track"
+                  :row="item.row"
+                  :days="daysForRows"
+                  :view-start-index="viewStartIndex"
+                  :view-end-index="viewEndIndex"
+                  :px-per-day="effectivePxPerDay"
+                  :label-column-width="LABEL_COLUMN_WIDTH"
+                  :lane-height="LANE_HEIGHT"
+                  :selected-timeline-id="selectedTimelineId"
+                  :saving-timeline-id="savingTimelineId"
+                  :success-timeline-id="successTimelineId"
+                  :error-timeline-id="errorTimelineId"
+                  @create="openCreateDialog"
+                  @resize="handleResizeCommit"
+                  @edit="openEditDialog"
+                  @delete="emit('delete', $event)"
+                  @select="selectedTimelineId = $event"
+                />
+              </template>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="my-test-timeline-view__footer text-xs text-muted">
-      Rows on screen: {{ renderRows.length }}.
-      Hover empty day cells and click + to create a new bar.
-      Wheel zoom is enabled over timeline body.
     </div>
 
     <UModal v-model:open="createModalOpen" title="Create timeline">
@@ -784,12 +792,21 @@ onMounted(() => {
         </div>
       </template>
     </UModal>
-  </UCard>
+  </div>
 </template>
 
 <style scoped>
 .my-test-timeline-view {
-  min-height: calc(100vh - 180px);
+}
+
+.my-test-timeline-view__toolbar {
+  margin-bottom: 8px;
+}
+
+.my-test-timeline-view__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .my-timeline-shell {
@@ -828,7 +845,4 @@ onMounted(() => {
   min-width: 100%;
 }
 
-.my-test-timeline-view__footer {
-  margin-top: 8px;
-}
 </style>
