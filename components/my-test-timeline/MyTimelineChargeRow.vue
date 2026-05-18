@@ -379,11 +379,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .my-timeline-charge-row {
   display: grid;
-  border-top: 1px solid var(--ui-border-muted);
 }
 
 .my-timeline-charge-row__label {
-  border-top: 1px solid var(--ui-border-muted);
+  border-bottom: 1px solid var(--ui-border);
   border-right: 1px solid var(--ui-border);
   background: var(--ui-bg);
   padding: 6px 10px;
@@ -409,12 +408,14 @@ onBeforeUnmount(() => {
 .my-timeline-charge-row__track-wrap {
   overflow-x: hidden;
   overflow-y: hidden;
-  border-top: 1px solid var(--ui-border-muted);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   box-sizing: border-box;
 }
 
 .my-timeline-charge-row__track {
   position: relative;
+  background: var(--ui-bg);
 }
 
 .my-timeline-charge-row__grid-bg {

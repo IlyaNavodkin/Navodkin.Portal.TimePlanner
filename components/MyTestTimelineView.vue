@@ -95,8 +95,10 @@ const rowsRef = computed(() => props.rows)
 const daysRef = computed(() => props.days)
 const selectedTimelineId = ref("")
 const graphScrollRef = ref<HTMLElement | null>(null)
+const timelineHeaderWrapRef = ref<HTMLElement | null>(null)
 const activeZoomPreset = ref<TimelineZoomPreset>("1m")
 const selectedYear = ref(CURRENT_YEAR)
+const leftHeaderHeightPx = ref(68)
 const createModalOpen = ref(false)
 const createFormError = ref("")
 const createTargetRow = ref<TimelineGridRowModel | null>(null)
@@ -567,11 +569,27 @@ function handleGlobalKeyDown(event: KeyboardEvent): void {
   selectedTimelineId.value = ""
 }
 
+function syncLeftHeaderHeightWithTimelineHeader(): void {
+  const wrap = timelineHeaderWrapRef.value
+  if (!wrap) {
+    return
+  }
+
+  const measuredHeight = Math.ceil(wrap.getBoundingClientRect().height)
+  if (measuredHeight > 0) {
+    leftHeaderHeightPx.value = measuredHeight
+  }
+}
+
 onMounted(() => {
   if (import.meta.client) {
     window.addEventListener("keydown", handleGlobalKeyDown)
+    window.addEventListener("resize", syncLeftHeaderHeightWithTimelineHeader)
   }
 
+  void nextTick(() => {
+    syncLeftHeaderHeightWithTimelineHeader()
+  })
   void panToToday()
 })
 
@@ -581,6 +599,13 @@ onBeforeUnmount(() => {
   }
 
   window.removeEventListener("keydown", handleGlobalKeyDown)
+  window.removeEventListener("resize", syncLeftHeaderHeightWithTimelineHeader)
+})
+
+watch([visibleDays, effectivePxPerDay], () => {
+  void nextTick(() => {
+    syncLeftHeaderHeightWithTimelineHeader()
+  })
 })
 </script>
 
@@ -616,7 +641,7 @@ onBeforeUnmount(() => {
     <div v-else class="my-test-timeline-view__body">
       <div class="my-timeline-shell">
         <div class="my-timeline-left">
-        <div class="my-timeline-left__header">
+        <div class="my-timeline-left__header" :style="{ height: `${leftHeaderHeightPx}px` }">
           <div class="text-xs font-semibold uppercase tracking-wide text-toned">Project / Charge</div>
           <div class="text-[11px] text-muted">Rows: {{ renderRows.length }}</div>
         </div>
@@ -658,11 +683,13 @@ onBeforeUnmount(() => {
             @wheel="onWheelZoom"
           >
             <div class="my-timeline-right__canvas" :style="{ minWidth: `${rightCanvasMinWidthPx}px` }">
-              <MyTimelineHeader
-                :visible-days="visibleDays"
-                :px-per-day="effectivePxPerDay"
-                :active-zoom-preset="activeZoomPreset"
-              />
+              <div ref="timelineHeaderWrapRef">
+                <MyTimelineHeader
+                  :visible-days="visibleDays"
+                  :px-per-day="effectivePxPerDay"
+                  :active-zoom-preset="activeZoomPreset"
+                />
+              </div>
 
               <template v-for="item in renderRows" :key="`right-${item.key}`">
                 <MyTimelineProjectRow
@@ -823,7 +850,6 @@ onBeforeUnmount(() => {
 }
 
 .my-timeline-left__header {
-  height: 57px;
   border-bottom: 1px solid var(--ui-border);
   padding: 8px 10px;
   display: flex;

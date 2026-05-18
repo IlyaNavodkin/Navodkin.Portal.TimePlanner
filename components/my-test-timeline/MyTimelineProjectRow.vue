@@ -61,11 +61,12 @@ const emit = defineEmits<{
 <style scoped>
 .my-timeline-project-row {
   display: grid;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 85%, transparent);
+  background: var(--ui-bg);
 }
 
 .my-timeline-project-row__label {
-  background: var(--ui-bg-elevated);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   padding: 8px 10px;
   box-sizing: border-box;
   display: flex;
@@ -89,7 +90,8 @@ const emit = defineEmits<{
 
 .my-timeline-project-row__fill {
   min-height: 42px;
-  background: var(--ui-bg-elevated);
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   box-sizing: border-box;
 }
 

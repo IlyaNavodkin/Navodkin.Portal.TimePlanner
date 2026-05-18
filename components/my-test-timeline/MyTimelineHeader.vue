@@ -120,11 +120,11 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__row--month {
   position: relative;
-  background: var(--ui-bg-elevated);
+  background: var(--ui-bg);
 }
 
 .my-timeline-header__row--days {
-  background: var(--ui-bg-elevated);
+  background: var(--ui-bg);
 }
 
 .my-timeline-header__cell {
@@ -160,10 +160,6 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__month-label + .my-timeline-header__month-label {
   border-left-color: var(--ui-border);
-}
-
-.my-timeline-header__month-label:nth-child(even) {
-  background: var(--ui-bg-accented) ;
 }
 
 .my-timeline-header__cell--day {
