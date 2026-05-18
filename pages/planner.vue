@@ -491,8 +491,8 @@ onMounted(async () => {
         <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
           Input data
         </div>
-        <div class="grid gap-4 md:grid-cols-2">
-          <UFormField label="Manager">
+        <div class="grid gap-4 md:grid-cols-[2fr_auto] md:items-end">
+          <UFormField label="Manager" class="w-full">
             <USelect
               v-model="managerId"
               :items="managerOptions"
@@ -500,10 +500,11 @@ onMounted(async () => {
               label-key="label"
               :loading="managersLoading"
               placeholder="Select manager"
+              class="w-full"
             />
           </UFormField>
 
-          <div class="flex items-end">
+          <div class="flex items-end md:justify-self-start">
             <UButton
               color="neutral"
               variant="soft"
