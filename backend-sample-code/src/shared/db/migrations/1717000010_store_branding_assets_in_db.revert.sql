@@ -1,1 +1,0 @@
--- No-op revert: previous /branding-assets file paths cannot be reconstructed from DB.
