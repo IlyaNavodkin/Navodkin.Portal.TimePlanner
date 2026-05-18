@@ -119,6 +119,20 @@ function getTopByLane(_lane: number): number {
   return 6
 }
 
+function onTrackBackgroundClick(event: MouseEvent): void {
+  const target = event.target
+  if (!(target instanceof Element)) {
+    emit("select", "")
+    return
+  }
+
+  if (target.closest(".my-timeline-bar")) {
+    return
+  }
+
+  emit("select", "")
+}
+
 function closeContextMenu(): void {
   contextMenu.value = null
 }
@@ -207,6 +221,7 @@ onBeforeUnmount(() => {
       class="my-timeline-charge-row__track"
       data-track-area="true"
       :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
+      @click="onTrackBackgroundClick"
     >
       <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
       <div class="my-timeline-charge-row__month-boundaries">
@@ -275,6 +290,7 @@ onBeforeUnmount(() => {
         class="my-timeline-charge-row__track"
         data-track-area="true"
         :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
+        @click="onTrackBackgroundClick"
       >
         <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
         <div class="my-timeline-charge-row__month-boundaries">

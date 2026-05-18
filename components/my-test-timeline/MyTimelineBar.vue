@@ -269,6 +269,7 @@ onBeforeUnmount(() => {
 }
 
 .my-timeline-bar--selected {
+  z-index: 3;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-secondary) 36%, transparent);
 }
 

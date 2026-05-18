@@ -34,16 +34,40 @@ function addIsoDays(isoDay: string, delta: number): string {
   return toIsoDateUtc(source)
 }
 
-function buildDays(start: string, count: number): string[] {
+function buildDaysForYearRange(startYear: number, endYear: number): string[] {
+  const fromYear = Math.min(startYear, endYear)
+  const toYear = Math.max(startYear, endYear)
+  const startDay = `${fromYear}-01-01`
+  const endDay = `${toYear}-12-31`
   const result: string[] = []
-  for (let index = 0; index < count; index += 1) {
-    result.push(addIsoDays(start, index))
+  let cursor = startDay
+
+  while (cursor <= endDay) {
+    result.push(cursor)
+    cursor = addIsoDays(cursor, 1)
   }
+
   return result
 }
 
-const days = ref(buildDays("2026-01-01", 730))
+const YEAR_RANGE_START = 1990
+const YEAR_RANGE_END = 2030
+const BASE_DAY = "2026-01-01"
+
+const days = ref(buildDaysForYearRange(YEAR_RANGE_START, YEAR_RANGE_END))
+const baseDayIndex = days.value.findIndex((day) => day === BASE_DAY)
 const dayToIndex = computed(() => new Map(days.value.map((day, index) => [day, index])))
+
+function fromBaseOffsets(id: string, employeeName: string, startOffset: number, endOffset: number, lane: number): TimelineGridBlockModel {
+  const safeBaseDayIndex = baseDayIndex < 0 ? 0 : baseDayIndex
+  return {
+    id,
+    employeeName,
+    startIndex: safeBaseDayIndex + startOffset,
+    endIndex: safeBaseDayIndex + endOffset,
+    lane,
+  }
+}
 
 const rows = ref<TimelineGridRowModel[]>([
   {
@@ -55,8 +79,8 @@ const rows = ref<TimelineGridRowModel[]>([
     label: "Apollo / Frontend",
     lanesCount: 2,
     blocks: [
-      { id: "tl-1", employeeName: "Alice", startIndex: 8, endIndex: 26, lane: 0 },
-      { id: "tl-2", employeeName: "Bob", startIndex: 20, endIndex: 44, lane: 1 },
+      fromBaseOffsets("tl-1", "Alice", 8, 26, 0),
+      fromBaseOffsets("tl-2", "Bob", 20, 44, 1),
     ],
   },
   {
@@ -68,8 +92,8 @@ const rows = ref<TimelineGridRowModel[]>([
     label: "Apollo / Backend",
     lanesCount: 2,
     blocks: [
-      { id: "tl-3", employeeName: "Carol", startIndex: 52, endIndex: 83, lane: 0 },
-      { id: "tl-4", employeeName: "David", startIndex: 76, endIndex: 112, lane: 1 },
+      fromBaseOffsets("tl-3", "Carol", 52, 83, 0),
+      fromBaseOffsets("tl-4", "David", 76, 112, 1),
     ],
   },
   {
@@ -80,7 +104,7 @@ const rows = ref<TimelineGridRowModel[]>([
     chargeName: "QA",
     label: "Mercury / QA",
     lanesCount: 1,
-    blocks: [{ id: "tl-5", employeeName: "Elena", startIndex: 140, endIndex: 168, lane: 0 }],
+    blocks: [fromBaseOffsets("tl-5", "Elena", 140, 168, 0)],
   },
   {
     id: "p3::c4",
@@ -90,7 +114,7 @@ const rows = ref<TimelineGridRowModel[]>([
     chargeName: "DevOps",
     label: "Orion / DevOps",
     lanesCount: 1,
-    blocks: [{ id: "tl-6", employeeName: "Frank", startIndex: 210, endIndex: 248, lane: 0 }],
+    blocks: [fromBaseOffsets("tl-6", "Frank", 210, 248, 0)],
   },
 ])
 
@@ -306,6 +330,8 @@ async function handleResize(payload: { timelineId: string; days: string[] }): Pr
     <MyTestTimelineView
       :days="days"
       :rows="rows"
+      :year-range-start="YEAR_RANGE_START"
+      :year-range-end="YEAR_RANGE_END"
       :saving-timeline-id="savingTimelineId"
       :success-timeline-id="successTimelineId"
       :error-timeline-id="errorTimelineId"

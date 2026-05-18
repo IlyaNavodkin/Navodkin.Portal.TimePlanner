@@ -43,7 +43,7 @@ export function useMyTimelineAdaptiveWidth(options: UseMyTimelineAdaptiveWidthOp
 
   const effectivePxPerDay = computed(() => {
     const daysCount = Math.max(1, options.visibleDays.value.length)
-    const fitPx = Math.floor(viewportBodyWidth.value / daysCount)
+    const fitPx = viewportBodyWidth.value / daysCount
     return Math.max(options.basePxPerDay.value, fitPx > 0 ? fitPx : options.basePxPerDay.value)
   })
 

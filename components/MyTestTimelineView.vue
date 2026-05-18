@@ -180,15 +180,40 @@ const selectedYearBounds = computed((): { start: number; end: number } => {
   return { start, end }
 })
 
-const viewStartIndex = computed(() => selectedYearBounds.value.start)
-const viewEndIndex = computed(() => selectedYearBounds.value.end)
-const visibleDays = computed(() => {
-  if (selectedYearBounds.value.end < selectedYearBounds.value.start) {
-    return []
+function buildYearDays(year: number): string[] {
+  const startDay = `${year}-01-01`
+  const endDay = `${year}-12-31`
+  const result: string[] = []
+  let current = startDay
+
+  while (current <= endDay) {
+    result.push(current)
+    current = addIsoDays(current, 1)
   }
 
-  return props.days.slice(selectedYearBounds.value.start, selectedYearBounds.value.end + 1)
+  return result
+}
+
+const isSelectedYearBackedByInputDays = computed(() =>
+  selectedYearBounds.value.end >= selectedYearBounds.value.start && selectedYearBounds.value.start >= 0,
+)
+
+const viewStartIndex = computed(() =>
+  isSelectedYearBackedByInputDays.value ? selectedYearBounds.value.start : 0,
+)
+const viewEndIndex = computed(() =>
+  isSelectedYearBackedByInputDays.value ? selectedYearBounds.value.end : Math.max(0, visibleDays.value.length - 1),
+)
+const visibleDays = computed(() => {
+  if (isSelectedYearBackedByInputDays.value) {
+    return props.days.slice(selectedYearBounds.value.start, selectedYearBounds.value.end + 1)
+  }
+
+  return buildYearDays(selectedYearNumber.value)
 })
+const daysForRows = computed(() =>
+  isSelectedYearBackedByInputDays.value ? props.days : visibleDays.value,
+)
 const basePxPerDay = computed(() => PX_PER_DAY_BY_ZOOM[activeZoomPreset.value])
 
 const {
@@ -243,7 +268,13 @@ const renderRows = computed<TimelineRenderRow[]>(() => {
       rows.push({
         kind: "charge",
         key: `charge::${row.id}`,
-        row,
+        row: isSelectedYearBackedByInputDays.value
+          ? row
+          : {
+              ...row,
+              blocks: [],
+              lanesCount: 1,
+            },
         rowHeightPx: LANE_HEIGHT,
       })
     }
@@ -437,8 +468,12 @@ function submitCreateDialog(): void {
   createFormError.value = ""
 }
 
-function onWheelZoom(event: WheelEvent): void {
+async function onWheelZoom(event: WheelEvent): Promise<void> {
   event.preventDefault()
+  const viewport = graphScrollRef.value
+  if (!viewport) {
+    return
+  }
 
   const currentIndex = ZOOM_PRESETS.indexOf(activeZoomPreset.value)
   if (currentIndex < 0) {
@@ -451,7 +486,23 @@ function onWheelZoom(event: WheelEvent): void {
     return
   }
 
+  const viewportRect = viewport.getBoundingClientRect()
+  const cursorX = clampNumber(event.clientX - viewportRect.left, 0, viewport.clientWidth)
+  const oldPxPerDay = Math.max(1, effectivePxPerDay.value)
+  const anchorDayFloat = (viewport.scrollLeft + cursorX) / oldPxPerDay
+
   activeZoomPreset.value = ZOOM_PRESETS[nextIndex]
+  await nextTick()
+
+  const updatedViewport = graphScrollRef.value
+  if (!updatedViewport) {
+    return
+  }
+
+  const newPxPerDay = Math.max(1, effectivePxPerDay.value)
+  const nextScrollLeft = anchorDayFloat * newPxPerDay - cursorX
+  const maxScrollLeft = Math.max(0, updatedViewport.scrollWidth - updatedViewport.clientWidth)
+  updatedViewport.scrollLeft = clampNumber(nextScrollLeft, 0, maxScrollLeft)
 }
 
 function panLeft(): void {
@@ -533,10 +584,6 @@ onMounted(() => {
       Set a valid date range.
     </div>
 
-    <div v-else-if="visibleDays.length === 0" class="rounded-md border border-default px-4 py-6 text-sm text-muted">
-      No days available for selected year.
-    </div>
-
     <div v-else-if="filteredRows.length === 0" class="rounded-md border border-default px-4 py-6 text-sm text-muted">
       No timeline rows for selected filters.
     </div>
@@ -564,7 +611,7 @@ onMounted(() => {
             v-else
             mode="label"
             :row="item.row"
-            :days="days"
+            :days="daysForRows"
             :view-start-index="viewStartIndex"
             :view-end-index="viewEndIndex"
             :px-per-day="effectivePxPerDay"
@@ -606,7 +653,7 @@ onMounted(() => {
                 v-else
                 mode="track"
                 :row="item.row"
-                :days="days"
+                :days="daysForRows"
                 :view-start-index="viewStartIndex"
                 :view-end-index="viewEndIndex"
                 :px-per-day="effectivePxPerDay"
