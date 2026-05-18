@@ -8,6 +8,7 @@ const props = defineProps<{
   pxPerDay: number
   activeZoomPreset: TimelineZoomPreset
 }>()
+const todayIso = new Date().toISOString().slice(0, 10)
 
 const labelStep = computed(() => {
   if (props.activeZoomPreset === "1w") {
@@ -100,7 +101,10 @@ function shouldRenderMonth(index: number): boolean {
         v-for="(day, index) in visibleDays"
         :key="`day-${day}`"
         class="my-timeline-header__cell my-timeline-header__cell--day"
-        :class="{ 'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0 }"
+        :class="{
+          'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0,
+          'my-timeline-header__cell--today': day === todayIso,
+        }"
       >
         <span v-if="index % labelStep === 0">{{ day.slice(8, 10) }}</span>
       </div>
@@ -166,6 +170,10 @@ function shouldRenderMonth(index: number): boolean {
   min-height: 30px;
   padding-top: 6px;
   border-right: 1px solid var(--ui-border-muted);
+}
+
+.my-timeline-header__cell--today {
+  background: color-mix(in srgb, var(--ui-primary) 18%, transparent);
 }
 
 .my-timeline-header__cell--month-boundary {

@@ -37,6 +37,7 @@ const contextMenu = ref<{
   y: number
   timelineId: string
 } | null>(null)
+const todayIso = new Date().toISOString().slice(0, 10)
 
 const rowHeightPx = computed(() => props.laneHeight)
 const trackWidthPx = computed(() => Math.max(1, (props.viewEndIndex - props.viewStartIndex + 1) * props.pxPerDay))
@@ -86,6 +87,20 @@ const occupiedDayIndexes = computed(() => {
   }
 
   return occupied
+})
+const todayDayIndex = computed(() => props.days.findIndex((day) => day === todayIso))
+const showTodayHighlight = computed(() =>
+  todayDayIndex.value >= props.viewStartIndex && todayDayIndex.value <= props.viewEndIndex,
+)
+const todayHighlightStyle = computed(() => {
+  if (!showTodayHighlight.value) {
+    return {}
+  }
+
+  return {
+    left: `${(todayDayIndex.value - props.viewStartIndex) * props.pxPerDay}px`,
+    width: `${props.pxPerDay}px`,
+  }
 })
 
 const gridBackgroundStyle = computed(() => ({
@@ -221,6 +236,11 @@ onBeforeUnmount(() => {
       :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
       @click="onTrackBackgroundClick"
     >
+      <div
+        v-if="showTodayHighlight"
+        class="my-timeline-charge-row__today-highlight"
+        :style="todayHighlightStyle"
+      />
       <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
       <div class="my-timeline-charge-row__month-boundaries">
         <div
@@ -289,6 +309,11 @@ onBeforeUnmount(() => {
         :style="{ width: `${trackWidthPx}px`, height: `${rowHeightPx}px` }"
         @click="onTrackBackgroundClick"
       >
+        <div
+          v-if="showTodayHighlight"
+          class="my-timeline-charge-row__today-highlight"
+          :style="todayHighlightStyle"
+        />
         <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
         <div class="my-timeline-charge-row__month-boundaries">
           <div
@@ -413,6 +438,14 @@ onBeforeUnmount(() => {
 .my-timeline-charge-row__grid-bg {
   position: absolute;
   inset: 0;
+}
+
+.my-timeline-charge-row__today-highlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--ui-primary) 14%, transparent);
+  pointer-events: none;
 }
 
 .my-timeline-charge-row__month-boundaries {
