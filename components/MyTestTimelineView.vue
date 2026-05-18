@@ -80,7 +80,7 @@ const emit = defineEmits<{
 }>()
 
 const LABEL_COLUMN_WIDTH = 320
-const LANE_HEIGHT = 38
+const LANE_HEIGHT = 50
 const PROJECT_ROW_HEIGHT = 42
 const CURRENT_YEAR = String(new Date().getUTCFullYear())
 const ZOOM_PRESETS: TimelineZoomPreset[] = ["1w", "1m", "3m", "1y"]

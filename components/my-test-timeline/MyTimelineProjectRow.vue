@@ -66,7 +66,7 @@ const emit = defineEmits<{
 
 .my-timeline-project-row__label {
   border-bottom: 1px solid var(--ui-border);
-  background: var(--ui-bg);
+  background:var(--ui-border);
   padding: 8px 10px;
   box-sizing: border-box;
   display: flex;

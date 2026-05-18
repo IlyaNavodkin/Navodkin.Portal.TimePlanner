@@ -38,7 +38,6 @@ const contextMenu = ref<{
   timelineId: string
 } | null>(null)
 
-const lanesCount = computed(() => 1)
 const rowHeightPx = computed(() => props.laneHeight)
 const trackWidthPx = computed(() => Math.max(1, (props.viewEndIndex - props.viewStartIndex + 1) * props.pxPerDay))
 const visibleDayIndexes = computed(() => {
@@ -208,7 +207,6 @@ onBeforeUnmount(() => {
     :style="{ width: `${labelColumnWidth}px`, height: `${rowHeightPx}px` }"
   >
     <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
-    <div class="my-timeline-charge-row__meta">Lanes: {{ lanesCount }}</div>
   </div>
 
   <div
@@ -281,7 +279,6 @@ onBeforeUnmount(() => {
   >
     <div class="my-timeline-charge-row__label">
       <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
-      <div class="my-timeline-charge-row__meta">Lanes: {{ lanesCount }}</div>
     </div>
 
     <div class="my-timeline-charge-row__track-wrap">
@@ -399,11 +396,6 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.my-timeline-charge-row__meta {
-  margin-top: 0;
-  color: var(--ui-text-toned);
-  font-size: 11px;
-}
 
 .my-timeline-charge-row__track-wrap {
   overflow-x: hidden;
@@ -474,3 +466,4 @@ onBeforeUnmount(() => {
   pointer-events: auto;
 }
 </style>
+
