@@ -10,6 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{
   toggle: []
+  select: []
 }>()
 </script>
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
     v-if="mode === 'label'"
     class="my-timeline-project-row__label"
     :style="{ width: `${labelColumnWidth}px`, height: `${rowHeightPx ?? 42}px` }"
+    @click="emit('select')"
   >
     <button
       type="button"
@@ -35,12 +37,14 @@ const emit = defineEmits<{
     v-if="mode === 'track'"
     class="my-timeline-project-row__fill"
     :style="{ height: `${rowHeightPx ?? 42}px` }"
+    @click="emit('select')"
   />
 
   <div
     v-if="!mode || mode === 'full'"
     class="my-timeline-project-row my-timeline-project-row--full"
     :style="{ gridTemplateColumns: `${labelColumnWidth}px 1fr` }"
+    @click="emit('select')"
   >
     <div class="my-timeline-project-row__label my-timeline-project-row__label--full">
       <button

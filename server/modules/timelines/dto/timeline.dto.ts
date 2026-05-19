@@ -12,6 +12,7 @@ export interface TimelineView {
   chargeExternalId: string
   managerExternalId: string
   employeeExternalId: string
+  comment?: string
   days: string[]
 }
 

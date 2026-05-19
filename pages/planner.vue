@@ -8,6 +8,7 @@ interface TimelineGridBlockModel {
   id: string
   employeeExternalId: string
   employeeName: string
+  comment?: string
   startIndex: number
   endIndex: number
   lane: number
@@ -28,6 +29,7 @@ interface TimelineBlockLayout {
   id: string
   employeeExternalId: string
   employeeName: string
+  comment?: string
   startIndex: number
   endIndex: number
   lane: number
@@ -137,6 +139,7 @@ function getTimelineLayouts(
         id: timeline.id,
         employeeExternalId: timeline.employeeExternalId,
         employeeName: employeeNameById.get(timeline.employeeExternalId) ?? timeline.employeeExternalId,
+        comment: timeline.comment,
         startIndex: Math.min(...indexes),
         endIndex: Math.max(...indexes),
       }
@@ -380,16 +383,28 @@ async function handleUpdateFromTimelineView(payload: TimelineUpdatePayloadModel)
   }
 
   const nextComment = payload.comment.trim()
-  if (nextComment) {
+  const currentComment = timeline.comment?.trim() ?? ""
+  if (nextComment && nextComment !== currentComment) {
     request.comment = nextComment
   }
 
   if (Object.keys(request).length === 0) {
+    toast.add({
+      title: "No changes to save",
+      color: "neutral",
+      duration: 1600,
+    })
     return
   }
 
   try {
     await actions.updateTimeline(payload.timelineId, request)
+    toast.add({
+      title: "Timeline updated",
+      description: request.comment !== undefined ? "Comment saved." : "Changes saved.",
+      color: "success",
+      duration: 2000,
+    })
   } catch (error) {
     toast.add({
       title: "Failed to update timeline",
@@ -411,6 +426,18 @@ async function deleteTimeline(id: string): Promise<void> {
   deleteSubmittingId.value = id
   try {
     await actions.deleteTimeline(id)
+    toast.add({
+      title: "Timeline deleted",
+      color: "success",
+      duration: 1800,
+    })
+  } catch (error) {
+    toast.add({
+      title: "Failed to delete timeline",
+      description: getErrorMessage(error),
+      color: "error",
+      duration: 2600,
+    })
   } finally {
     deleteSubmittingId.value = ""
   }

@@ -65,4 +65,11 @@ export interface TimelineBarCommitModel {
   endIndex: number
 }
 
+export interface TimelineDragPreviewModel {
+  timelineId: string
+  mode: "move" | "start" | "end"
+  startIndex: number
+  endIndex: number
+}
+
 export type TimelineZoomPreset = "1w" | "1m" | "3m" | "1y"

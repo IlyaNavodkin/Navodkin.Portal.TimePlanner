@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue"
 import { clampNumber } from "~/composables/my-test-timeline/useMyTimelineDate"
-import type { TimelineBarCommitModel, TimelineGridBlockModel } from "~/composables/my-test-timeline/types"
+import type {
+  TimelineBarCommitModel,
+  TimelineDragPreviewModel,
+  TimelineGridBlockModel,
+} from "~/composables/my-test-timeline/types"
 
 type DragMode = "move" | "start" | "end"
 
@@ -33,6 +37,8 @@ const emit = defineEmits<{
   select: [timelineId: string]
   contextmenu: [payload: { x: number; y: number; timelineId: string }]
   commit: [payload: TimelineBarCommitModel]
+  preview: [payload: TimelineDragPreviewModel]
+  "preview-end": [timelineId: string]
   edit: [timelineId: string]
 }>()
 
@@ -89,6 +95,12 @@ function startDrag(mode: DragMode, event: PointerEvent): void {
   transientStartIndex.value = props.block.startIndex
   transientEndIndex.value = props.block.endIndex
   emit("select", props.block.id)
+  emit("preview", {
+    timelineId: props.block.id,
+    mode,
+    startIndex: props.block.startIndex,
+    endIndex: props.block.endIndex,
+  })
   applyGlobalCursor(mode)
 
   window.addEventListener("pointermove", onPointerMove)
@@ -169,6 +181,12 @@ function onPointerMove(event: PointerEvent): void {
 
   transientStartIndex.value = nextStart
   transientEndIndex.value = nextEnd
+  emit("preview", {
+    timelineId: props.block.id,
+    mode: activeDrag.mode,
+    startIndex: nextStart,
+    endIndex: nextEnd,
+  })
 }
 
 function clearDragListeners(): void {
@@ -189,6 +207,7 @@ function finishDrag(pointerId: number): void {
   dragState.value = null
   transientStartIndex.value = null
   transientEndIndex.value = null
+  emit("preview-end", props.block.id)
   clearDragListeners()
   clearGlobalCursor()
 
@@ -227,6 +246,9 @@ function onDoubleClick(): void {
 }
 
 onBeforeUnmount(() => {
+  if (dragState.value) {
+    emit("preview-end", props.block.id)
+  }
   clearDragListeners()
   clearGlobalCursor()
 })

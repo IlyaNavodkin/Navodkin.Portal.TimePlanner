@@ -11,6 +11,7 @@ import MyTimelineChargeRow from "~/components/my-test-timeline/MyTimelineChargeR
 import type {
   TimelineBarCommitModel,
   TimelineCreatePayloadModel,
+  TimelineDragPreviewModel,
   TimelineEmployeeModel,
   TimelineGridBlockModel,
   TimelineGridRowModel,
@@ -123,6 +124,7 @@ const editForm = ref<TimelineEditFormState>({
   startDay: "",
   endDay: "",
 })
+const activeDragPreview = ref<TimelineDragPreviewModel | null>(null)
 
 const employeeOptions = computed(() =>
   props.employees.map((employee) => ({
@@ -416,6 +418,37 @@ function handleResizeCommit(payload: TimelineBarCommitModel): void {
     timelineId: payload.timelineId,
     days,
   })
+}
+
+const selectedTimelineRange = computed(() => {
+  if (!selectedTimelineId.value) {
+    return null
+  }
+
+  return findTimeline(selectedTimelineId.value)
+})
+
+const effectiveTimelineRange = computed(() => {
+  if (activeDragPreview.value) {
+    return {
+      startIndex: activeDragPreview.value.startIndex,
+      endIndex: activeDragPreview.value.endIndex,
+    }
+  }
+
+  return selectedTimelineRange.value
+})
+
+function handleDragPreview(payload: TimelineDragPreviewModel): void {
+  activeDragPreview.value = payload
+}
+
+function handleDragPreviewEnd(timelineId: string): void {
+  if (!activeDragPreview.value || activeDragPreview.value.timelineId !== timelineId) {
+    return
+  }
+
+  activeDragPreview.value = null
 }
 
 function findTimeline(timelineId: string): { startIndex: number; endIndex: number } | null {
@@ -819,6 +852,7 @@ watch(
             :label-column-width="LABEL_COLUMN_WIDTH"
             :row-height-px="item.rowHeightPx"
             @toggle="toggleProject(item.projectExternalId)"
+            @select="handleTimelineSelect('')"
           />
 
           <MyTimelineChargeRow
@@ -837,6 +871,8 @@ watch(
             :error-timeline-id="errorTimelineId"
             :create-armed="createArmedRowId === item.row.id"
             @arm-create="armRowForCreate"
+            @drag-preview="handleDragPreview"
+            @drag-preview-end="handleDragPreviewEnd"
           />
         </template>
         </div>
@@ -851,8 +887,11 @@ watch(
               <div ref="timelineHeaderWrapRef">
                 <MyTimelineHeader
                   :visible-days="visibleDays"
+                  :view-start-index="viewStartIndex"
                   :px-per-day="effectivePxPerDay"
                   :active-zoom-preset="activeZoomPreset"
+                  :selected-range="effectiveTimelineRange"
+                  @select="handleTimelineSelect('')"
                 />
               </div>
 
@@ -865,6 +904,7 @@ watch(
                   :collapsed="isProjectCollapsed(item.projectExternalId)"
                   :label-column-width="LABEL_COLUMN_WIDTH"
                   :row-height-px="item.rowHeightPx"
+                  @select="handleTimelineSelect('')"
                 />
 
                 <MyTimelineChargeRow
@@ -884,6 +924,8 @@ watch(
                   :create-armed="createArmedRowId === item.row.id"
                   @create="openCreateDialog"
                   @arm-create="armRowForCreate"
+                  @drag-preview="handleDragPreview"
+                  @drag-preview-end="handleDragPreviewEnd"
                   @resize="handleResizeCommit"
                   @edit="openEditDialog"
                   @delete="emit('delete', $event)"

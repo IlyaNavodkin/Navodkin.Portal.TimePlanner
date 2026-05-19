@@ -43,6 +43,7 @@ export interface TimelineItemDto {
   chargeExternalId: string
   managerExternalId: string
   employeeExternalId: string
+  comment?: string
   days: IsoDate[]
 }
 

@@ -5,6 +5,7 @@ import { isWeekendIsoDay } from "~/composables/my-test-timeline/useMyTimelineDat
 import type {
   TimelineBarCommitModel,
   TimelineCreatePayloadModel,
+  TimelineDragPreviewModel,
   TimelineGridRowModel,
 } from "~/composables/my-test-timeline/types"
 
@@ -30,6 +31,8 @@ const emit = defineEmits<{
   edit: [timelineId: string]
   delete: [timelineId: string]
   select: [timelineId: string]
+  "drag-preview": [payload: TimelineDragPreviewModel]
+  "drag-preview-end": [timelineId: string]
   "arm-create": [rowId: string]
 }>()
 
@@ -192,6 +195,14 @@ function handleDeleteFromContextMenu(): void {
   closeContextMenu()
 }
 
+function handleBarPreview(payload: TimelineDragPreviewModel): void {
+  emit("drag-preview", payload)
+}
+
+function handleBarPreviewEnd(timelineId: string): void {
+  emit("drag-preview-end", timelineId)
+}
+
 function handleGlobalPointerDown(event: PointerEvent): void {
   if (!contextMenu.value) {
     return
@@ -240,6 +251,7 @@ onBeforeUnmount(() => {
     class="my-timeline-charge-row__label"
     :class="{ 'my-timeline-charge-row__label--create-armed': createArmed }"
     :style="{ width: `${labelColumnWidth}px`, height: `${rowHeightPx}px` }"
+    @click="emit('select', '')"
     @dblclick="emit('arm-create', row.id)"
   >
     <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
@@ -321,6 +333,8 @@ onBeforeUnmount(() => {
         :success="successTimelineId === block.id"
         :error="errorTimelineId === block.id"
         @commit="emit('resize', $event)"
+        @preview="handleBarPreview"
+        @preview-end="handleBarPreviewEnd"
         @select="emit('select', $event)"
         @edit="emit('edit', $event)"
         @contextmenu="openContextMenu"
@@ -333,7 +347,7 @@ onBeforeUnmount(() => {
     class="my-timeline-charge-row"
     :style="{ gridTemplateColumns: `${labelColumnWidth}px 1fr` }"
   >
-    <div class="my-timeline-charge-row__label" :class="{ 'my-timeline-charge-row__label--create-armed': createArmed }" @dblclick="emit('arm-create', row.id)">
+    <div class="my-timeline-charge-row__label" :class="{ 'my-timeline-charge-row__label--create-armed': createArmed }" @click="emit('select', '')" @dblclick="emit('arm-create', row.id)">
       <div class="my-timeline-charge-row__charge">{{ row.chargeName }}</div>
     </div>
 
@@ -407,6 +421,8 @@ onBeforeUnmount(() => {
           :success="successTimelineId === block.id"
           :error="errorTimelineId === block.id"
           @commit="emit('resize', $event)"
+          @preview="handleBarPreview"
+          @preview-end="handleBarPreviewEnd"
           @select="emit('select', $event)"
           @edit="emit('edit', $event)"
           @contextmenu="openContextMenu"
@@ -536,9 +552,10 @@ onBeforeUnmount(() => {
 .my-timeline-charge-row__create-layer {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   display: flex;
 }
+
 
 .my-timeline-charge-row__create-cell {
   height: 100%;

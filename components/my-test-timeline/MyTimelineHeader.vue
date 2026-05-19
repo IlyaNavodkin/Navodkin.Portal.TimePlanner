@@ -3,10 +3,21 @@ import { computed } from "vue"
 import { formatMonthLabel, isWeekendIsoDay } from "~/composables/my-test-timeline/useMyTimelineDate"
 import type { TimelineZoomPreset } from "~/composables/my-test-timeline/types"
 
+interface TimelineSelectedRange {
+  startIndex: number
+  endIndex: number
+}
+
 const props = defineProps<{
   visibleDays: string[]
+  viewStartIndex: number
   pxPerDay: number
   activeZoomPreset: TimelineZoomPreset
+  selectedRange?: TimelineSelectedRange | null
+}>()
+
+const emit = defineEmits<{
+  select: []
 }>()
 const todayIso = new Date().toISOString().slice(0, 10)
 
@@ -70,16 +81,40 @@ function shouldRenderMonth(index: number): boolean {
 
   return current.slice(0, 7) !== previous.slice(0, 7)
 }
+
+function getAbsoluteIndex(index: number): number {
+  return props.viewStartIndex + index
+}
+
+function isPreviewRangeIndex(index: number): boolean {
+  if (!props.selectedRange) {
+    return false
+  }
+
+  const absoluteIndex = getAbsoluteIndex(index)
+  return absoluteIndex >= props.selectedRange.startIndex && absoluteIndex <= props.selectedRange.endIndex
+}
+
+function isPreviewBoundaryIndex(index: number): boolean {
+  if (!props.selectedRange) {
+    return false
+  }
+
+  const absoluteIndex = getAbsoluteIndex(index)
+  return absoluteIndex === props.selectedRange.startIndex || absoluteIndex === props.selectedRange.endIndex
+}
 </script>
 
 <template>
-  <div class="my-timeline-header">
+  <div class="my-timeline-header" @click="emit('select')">
     <div class="my-timeline-header__row my-timeline-header__row--month" :style="gridStyle">
       <div
         v-for="(day, index) in visibleDays"
         :key="`month-${day}`"
         class="my-timeline-header__cell my-timeline-header__cell--month"
-        :class="{ 'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0 }"
+        :class="{
+          'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0,
+        }"
       />
       <div class="my-timeline-header__month-labels">
         <div
@@ -105,6 +140,8 @@ function shouldRenderMonth(index: number): boolean {
           'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0,
           'my-timeline-header__cell--today': day === todayIso,
           'my-timeline-header__cell--weekend': isWeekendIsoDay(day),
+          'my-timeline-header__cell--preview': isPreviewRangeIndex(index),
+          'my-timeline-header__cell--preview-boundary': isPreviewBoundaryIndex(index),
         }"
       >
         <span v-if="index % labelStep === 0">{{ day.slice(8, 10) }}</span>
@@ -179,6 +216,15 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__cell--weekend {
   background: color-mix(in srgb, var(--ui-border-muted) 28%, transparent);
+}
+
+.my-timeline-header__cell--preview {
+  background: color-mix(in srgb, var(--ui-primary) 14%, transparent);
+}
+
+.my-timeline-header__cell--preview-boundary {
+  background: color-mix(in srgb, var(--ui-primary) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-primary) 42%, transparent);
 }
 
 .my-timeline-header__cell--month-boundary {
