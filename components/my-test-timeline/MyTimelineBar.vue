@@ -242,6 +242,7 @@ onBeforeUnmount(() => {
     :style="barStyle"
     @pointerdown.stop="onBodyPointerDown"
     @click.stop="emit('select', block.id)"
+    @dblclick.stop
     @contextmenu.stop.prevent="onContextMenu"
   >
     <button
@@ -271,8 +272,8 @@ onBeforeUnmount(() => {
   display: flex;
   min-width: 8px;
   align-items: center;
-  border: 1px solid var(--color-slate-600);
-  background: linear-gradient(120deg, var(--color-slate-700), var(--color-slate-800));
+  border: 1px solid var(--ui-border-accented);
+  background: linear-gradient(120deg, var(--ui-color-secondary-500), var(--ui-color-secondary-700));
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(var(--color-shadow), 0.15);
   color: #f8fafc; /* slate-50 */
@@ -291,13 +292,17 @@ onBeforeUnmount(() => {
 
 .my-timeline-bar--selected {
   z-index: 3;
-  border-color: color-mix(in srgb, var(--ui-primary) 72%, var(--color-slate-500));
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--ui-primary) 34%, var(--color-slate-700)),
-    color-mix(in srgb, var(--ui-primary) 28%, var(--color-slate-800))
-  );
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-primary) 36%, transparent);
+  border-color: var(--ui-color-primary-600);
+  background: linear-gradient(120deg, var(--ui-color-primary-500), var(--ui-color-primary-600));
+  box-shadow: none;
+}
+
+.my-timeline-bar--selected .my-timeline-bar__handle {
+  background: var(--ui-color-primary-600);
+}
+
+.my-timeline-bar--selected .my-timeline-bar__handle:hover {
+  background: var(--ui-color-primary-500);
 }
 
 .my-timeline-bar--saving {
@@ -319,13 +324,13 @@ onBeforeUnmount(() => {
   width: 8px;
   height: 100%;
   border: 0;
-  background: color-mix(in srgb, var(--ui-bg) 15%, transparent);
+  background: var(--ui-color-secondary-700);
   cursor: ew-resize;
   flex-shrink: 0;
 }
 
 .my-timeline-bar__handle:hover {
-  background: color-mix(in srgb, var(--ui-bg-inverted) 14%, transparent);
+  background: var(--ui-color-secondary-600);
 }
 
 .my-timeline-bar__label {

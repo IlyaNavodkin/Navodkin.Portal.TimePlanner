@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brand UI Palette Demo</title>
+    <style>
+      :root {
+        /* Primary: brand #bd3629 */
+        --ui-color-primary-50: var(--color-brand-50, #fdf3f2);
+        --ui-color-primary-100: var(--color-brand-100, #fbe5e2);
+        --ui-color-primary-200: var(--color-brand-200, #f7c9c3);
+        --ui-color-primary-300: var(--color-brand-300, #f1a29a);
+        --ui-color-primary-400: var(--color-brand-400, #e66f63);
+        --ui-color-primary-500: var(--color-brand-500, #bd3629);
+        --ui-color-primary-600: var(--color-brand-600, #a12f24);
+        --ui-color-primary-700: var(--color-brand-700, #85271e);
+        --ui-color-primary-800: var(--color-brand-800, #681f18);
+        --ui-color-primary-900: var(--color-brand-900, #4d1712);
+        --ui-color-primary-950: var(--color-brand-950, #2f0d0a);
+
+        /* Secondary: #381a14 */
+        --ui-color-secondary-50: var(--color-secondary-50, #f5f1f0);
+        --ui-color-secondary-100: var(--color-secondary-100, #e8dfdd);
+        --ui-color-secondary-200: var(--color-secondary-200, #d1beb9);
+        --ui-color-secondary-300: var(--color-secondary-300, #b2948d);
+        --ui-color-secondary-400: var(--color-secondary-400, #8d655d);
+        --ui-color-secondary-500: var(--color-secondary-500, #381a14);
+        --ui-color-secondary-600: var(--color-secondary-600, #301610);
+        --ui-color-secondary-700: var(--color-secondary-700, #28120d);
+        --ui-color-secondary-800: var(--color-secondary-800, #200e0a);
+        --ui-color-secondary-900: var(--color-secondary-900, #190b08);
+        --ui-color-secondary-950: var(--color-secondary-950, #0f0504);
+
+        /* Neutral ramp based on #202020 */
+        --ui-color-neutral-50: #f7f7f7;
+        --ui-color-neutral-100: #eeeeee;
+        --ui-color-neutral-200: #d5d5d5;
+        --ui-color-neutral-300: #b5b5b5;
+        --ui-color-neutral-400: #949494;
+        --ui-color-neutral-500: #787878;
+        --ui-color-neutral-600: #5f5f5f;
+        --ui-color-neutral-700: #3d3d3d;
+        --ui-color-neutral-800: #2b2b2b;
+        --ui-color-neutral-900: #202020;
+        --ui-color-neutral-950: #141414;
+
+        --ui-primary: var(--ui-color-primary-500);
+        --ui-secondary: var(--ui-color-secondary-500);
+
+        --ui-text-dimmed: var(--ui-color-neutral-500);
+        --ui-text-muted: var(--ui-color-neutral-400);
+        --ui-text-toned: var(--ui-color-neutral-300);
+        --ui-text: var(--ui-color-neutral-200);
+        --ui-text-highlighted: #ffffff;
+        --ui-text-inverted: var(--ui-color-neutral-900);
+
+        --ui-bg: var(--ui-color-neutral-900);
+        --ui-bg-muted: var(--ui-color-neutral-800);
+        --ui-bg-elevated: #262626;
+        --ui-bg-accented: var(--ui-color-neutral-700);
+        --ui-bg-inverted: #ffffff;
+
+        --ui-border: var(--ui-color-neutral-800);
+        --ui-border-muted: var(--ui-color-neutral-700);
+        --ui-border-accented: #4a4a4a;
+        --ui-border-inverted: #ffffff;
+
+        --radius: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+        background: radial-gradient(
+            1200px 600px at 20% -10%,
+            color-mix(in srgb, var(--ui-primary) 22%, transparent),
+            transparent 65%
+          ),
+          radial-gradient(
+            1000px 500px at 100% 0,
+            color-mix(in srgb, var(--ui-secondary) 35%, transparent),
+            transparent 60%
+          ),
+          var(--ui-bg);
+        color: var(--ui-text);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 12px;
+        color: var(--ui-text-highlighted);
+      }
+
+      h1 {
+        font-size: clamp(26px, 5vw, 40px);
+      }
+
+      p {
+        margin: 0;
+        color: var(--ui-text-toned);
+      }
+
+      .hero {
+        border: 1px solid var(--ui-border);
+        background: linear-gradient(
+          120deg,
+          color-mix(in srgb, var(--ui-primary) 18%, var(--ui-bg-muted)),
+          color-mix(in srgb, var(--ui-secondary) 24%, var(--ui-bg-muted))
+        );
+        border-radius: calc(var(--radius) + 6px);
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+
+      .hero code {
+        color: var(--ui-text-highlighted);
+        background: color-mix(in srgb, var(--ui-bg) 55%, transparent);
+        border: 1px solid var(--ui-border);
+        border-radius: 8px;
+        padding: 4px 8px;
+      }
+
+      .section {
+        margin-top: 28px;
+      }
+
+      .palette {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .card {
+        border: 1px solid var(--ui-border);
+        background: var(--ui-bg-muted);
+        border-radius: var(--radius);
+        padding: 16px;
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .swatch {
+        border: 1px solid var(--ui-border);
+        border-radius: 10px;
+        min-height: 62px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        font-size: 12px;
+        line-height: 1.15;
+        color: #fff;
+      }
+
+      .swatch.light {
+        color: #1a1a1a;
+      }
+
+      .demo-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1.2fr 1fr;
+      }
+
+      .ui-form {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--ui-text-toned);
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        background: var(--ui-bg);
+        color: var(--ui-text);
+        border: 1px solid var(--ui-border-accented);
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: color-mix(in srgb, var(--ui-primary) 70%, white);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-primary) 22%, transparent);
+      }
+
+      .row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        color: #fff;
+        background: linear-gradient(180deg, var(--ui-color-primary-400), var(--ui-color-primary-600));
+      }
+
+      .btn-primary:hover {
+        filter: brightness(1.08);
+      }
+
+      .btn-secondary {
+        color: #fff;
+        background: linear-gradient(180deg, var(--ui-color-secondary-400), var(--ui-color-secondary-600));
+      }
+
+      .btn-ghost {
+        color: var(--ui-text);
+        background: transparent;
+        border-color: var(--ui-border-accented);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 6px 11px;
+        font-size: 12px;
+        border: 1px solid var(--ui-border);
+      }
+
+      .chip-primary {
+        background: color-mix(in srgb, var(--ui-primary) 20%, transparent);
+        color: #ffd7d2;
+        border-color: color-mix(in srgb, var(--ui-primary) 55%, var(--ui-border));
+      }
+
+      .chip-secondary {
+        background: color-mix(in srgb, var(--ui-secondary) 35%, transparent);
+        color: #f0d8d2;
+      }
+
+      .notice {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid color-mix(in srgb, var(--ui-primary) 45%, var(--ui-border));
+        background: color-mix(in srgb, var(--ui-primary) 10%, var(--ui-bg-muted));
+        color: var(--ui-text);
+      }
+
+      .token-view {
+        border: 1px dashed var(--ui-border-muted);
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 12px;
+        font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: var(--ui-text-muted);
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 900px) {
+        .demo-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <section class="hero">
+        <h1>Brand Palette Demo</h1>
+        <p>Primary: <code>#bd3629</code>, Secondary: <code>#381a14</code>, Background: <code>#202020</code>.</p>
+      </section>
+
+      <section class="section">
+        <h2>Палитра</h2>
+        <div class="palette">
+          <article class="card">
+            <h3>Primary</h3>
+            <div class="swatches">
+              <div class="swatch light" style="background:#fdf3f2">50<br />#fdf3f2</div>
+              <div class="swatch light" style="background:#fbe5e2">100<br />#fbe5e2</div>
+              <div class="swatch light" style="background:#f7c9c3">200<br />#f7c9c3</div>
+              <div class="swatch light" style="background:#f1a29a">300<br />#f1a29a</div>
+              <div class="swatch" style="background:#e66f63">400<br />#e66f63</div>
+              <div class="swatch" style="background:#bd3629">500<br />#bd3629</div>
+              <div class="swatch" style="background:#a12f24">600<br />#a12f24</div>
+              <div class="swatch" style="background:#85271e">700<br />#85271e</div>
+              <div class="swatch" style="background:#681f18">800<br />#681f18</div>
+              <div class="swatch" style="background:#4d1712">900<br />#4d1712</div>
+              <div class="swatch" style="background:#2f0d0a">950<br />#2f0d0a</div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Secondary</h3>
+            <div class="swatches">
+              <div class="swatch light" style="background:#f5f1f0">50<br />#f5f1f0</div>
+              <div class="swatch light" style="background:#e8dfdd">100<br />#e8dfdd</div>
+              <div class="swatch light" style="background:#d1beb9">200<br />#d1beb9</div>
+              <div class="swatch" style="background:#b2948d">300<br />#b2948d</div>
+              <div class="swatch" style="background:#8d655d">400<br />#8d655d</div>
+              <div class="swatch" style="background:#381a14">500<br />#381a14</div>
+              <div class="swatch" style="background:#301610">600<br />#301610</div>
+              <div class="swatch" style="background:#28120d">700<br />#28120d</div>
+              <div class="swatch" style="background:#200e0a">800<br />#200e0a</div>
+              <div class="swatch" style="background:#190b08">900<br />#190b08</div>
+              <div class="swatch" style="background:#0f0504">950<br />#0f0504</div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Neutrals</h3>
+            <div class="swatches">
+              <div class="swatch light" style="background:#f7f7f7">50<br />#f7f7f7</div>
+              <div class="swatch light" style="background:#eeeeee">100<br />#eeeeee</div>
+              <div class="swatch light" style="background:#d5d5d5">200<br />#d5d5d5</div>
+              <div class="swatch light" style="background:#b5b5b5">300<br />#b5b5b5</div>
+              <div class="swatch light" style="background:#949494">400<br />#949494</div>
+              <div class="swatch" style="background:#787878">500<br />#787878</div>
+              <div class="swatch" style="background:#5f5f5f">600<br />#5f5f5f</div>
+              <div class="swatch" style="background:#3d3d3d">700<br />#3d3d3d</div>
+              <div class="swatch" style="background:#2b2b2b">800<br />#2b2b2b</div>
+              <div class="swatch" style="background:#202020">900<br />#202020</div>
+              <div class="swatch" style="background:#141414">950<br />#141414</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Компоненты</h2>
+        <div class="demo-grid">
+          <article class="card">
+            <h3>Форма</h3>
+            <form class="ui-form" action="#">
+              <div class="row">
+                <div>
+                  <label for="name">Имя</label>
+                  <input id="name" type="text" placeholder="Введите имя" />
+                </div>
+                <div>
+                  <label for="email">Email</label>
+                  <input id="email" type="email" placeholder="you@company.com" />
+                </div>
+              </div>
+              <div>
+                <label for="team">Команда</label>
+                <select id="team">
+                  <option>Backend</option>
+                  <option>Frontend</option>
+                  <option>Design</option>
+                </select>
+              </div>
+              <div>
+                <label for="message">Комментарий</label>
+                <textarea id="message" rows="4" placeholder="Добавьте описание..."></textarea>
+              </div>
+              <div class="buttons">
+                <button class="btn btn-primary" type="button">Сохранить</button>
+                <button class="btn btn-secondary" type="button">Отправить</button>
+                <button class="btn btn-ghost" type="button">Отмена</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="card">
+            <h3>UI Preview</h3>
+            <p>Бейджи, уведомление и токены в действии.</p>
+            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap">
+              <span class="chip chip-primary">Primary Accent</span>
+              <span class="chip chip-secondary">Secondary Accent</span>
+              <span class="chip">Neutral</span>
+            </div>
+            <div class="notice">Фон и контраст настроены для тёмной поверхности <code>#202020</code>.</div>
+            <div class="token-view">
+--ui-primary: var(--ui-color-primary-500);
+--ui-secondary: var(--ui-color-secondary-500);
+--ui-bg: var(--ui-color-neutral-900);
+--ui-text: var(--ui-color-neutral-200);
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

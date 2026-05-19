@@ -208,6 +208,28 @@ function buildYearDays(year: number): string[] {
   return result
 }
 
+function parseIsoDayUtc(isoDay: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDay)
+  if (!match) {
+    return null
+  }
+
+  const year = Number.parseInt(match[1], 10)
+  const month = Number.parseInt(match[2], 10)
+  const day = Number.parseInt(match[3], 10)
+
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  if (
+    parsed.getUTCFullYear() !== year
+    || parsed.getUTCMonth() + 1 !== month
+    || parsed.getUTCDate() !== day
+  ) {
+    return null
+  }
+
+  return parsed
+}
+
 const isSelectedYearBackedByInputDays = computed(() =>
   selectedYearBounds.value.end >= selectedYearBounds.value.start && selectedYearBounds.value.start >= 0,
 )
@@ -413,14 +435,14 @@ function submitEditDialog(): void {
     return
   }
 
-  const startIndex = daysForRows.value.findIndex((day) => day === editForm.value.startDay)
-  const endIndex = daysForRows.value.findIndex((day) => day === editForm.value.endDay)
-  if (startIndex < 0 || endIndex < 0) {
+  const startDay = parseIsoDayUtc(editForm.value.startDay)
+  const endDay = parseIsoDayUtc(editForm.value.endDay)
+  if (!startDay || !endDay) {
     editFormError.value = "Invalid date range."
     return
   }
 
-  if (startIndex > endIndex) {
+  if (startDay.getTime() > endDay.getTime()) {
     editFormError.value = "Start date must be earlier than or equal to end date."
     return
   }
@@ -440,7 +462,6 @@ function submitEditDialog(): void {
 function openCreateDialog(payload: TimelineCreatePayloadModel): void {
   const startDay = payload.day
   const endDayCandidate = addIsoDays(startDay, 1)
-  const lastDay = visibleDays.value[visibleDays.value.length - 1] ?? startDay
 
   createTargetRow.value = payload.row
   createFormError.value = ""
@@ -451,7 +472,7 @@ function openCreateDialog(payload: TimelineCreatePayloadModel): void {
     employeeExternalId: defaultEmployeeExternalId,
     comment: "",
     startDay,
-    endDay: endDayCandidate > lastDay ? lastDay : endDayCandidate,
+    endDay: endDayCandidate,
   }
   createModalOpen.value = true
 }
@@ -473,14 +494,14 @@ function submitCreateDialog(): void {
     return
   }
 
-  const startIndex = daysForRows.value.findIndex((day) => day === createForm.value.startDay)
-  const endIndex = daysForRows.value.findIndex((day) => day === createForm.value.endDay)
-  if (startIndex < 0 || endIndex < 0) {
+  const startDay = parseIsoDayUtc(createForm.value.startDay)
+  const endDay = parseIsoDayUtc(createForm.value.endDay)
+  if (!startDay || !endDay) {
     createFormError.value = "Invalid date range."
     return
   }
 
-  if (startIndex > endIndex) {
+  if (startDay.getTime() > endDay.getTime()) {
     createFormError.value = "Start date must be earlier than or equal to end date."
     return
   }
