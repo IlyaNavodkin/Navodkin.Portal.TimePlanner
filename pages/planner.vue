@@ -59,6 +59,7 @@ const resizeSavingTimelineId = ref("")
 const resizeSuccessTimelineId = ref("")
 const resizeErrorTimelineId = ref("")
 const resizeErrorToastId = ref<string | number | null>(null)
+const optimisticTimelineDaysById = ref<Record<string, string[]>>({})
 
 function parseIsoDate(isoDate: string): Date | null {
   if (!isoDate) {
@@ -210,9 +211,23 @@ const employeeNameById = computed(() => {
   return result
 })
 
+const timelinesForView = computed<TimelineItemDto[]>(() =>
+  timelines.value.map((timeline) => {
+    const optimisticDays = optimisticTimelineDaysById.value[timeline.id]
+    if (!optimisticDays) {
+      return timeline
+    }
+
+    return {
+      ...timeline,
+      days: [...optimisticDays],
+    }
+  }),
+)
+
 const timelineById = computed(() => {
   const result = new Map<string, TimelineItemDto>()
-  for (const timeline of timelines.value) {
+  for (const timeline of timelinesForView.value) {
     result.set(timeline.id, timeline)
   }
   return result
@@ -224,7 +239,7 @@ const timelineRows = computed<TimelineGridRowModel[]>(() => {
   }
 
   const timelinesByKey = new Map<string, TimelineItemDto[]>()
-  for (const timeline of timelines.value) {
+  for (const timeline of timelinesForView.value) {
     const key = `${timeline.projectExternalId}::${timeline.chargeExternalId}`
     const bucket = timelinesByKey.get(key) ?? []
     bucket.push(timeline)
@@ -398,6 +413,13 @@ async function resizeTimeline(payload: { timelineId: string; days: string[] }): 
     return
   }
 
+  const timelineBeforeSave = timelineById.value.get(payload.timelineId)
+  const rollbackDays = timelineBeforeSave ? [...timelineBeforeSave.days] : []
+  optimisticTimelineDaysById.value = {
+    ...optimisticTimelineDaysById.value,
+    [payload.timelineId]: [...payload.days],
+  }
+
   resizeSavingTimelineId.value = payload.timelineId
   resizeErrorTimelineId.value = ""
   resizeSuccessTimelineId.value = ""
@@ -420,7 +442,17 @@ async function resizeTimeline(payload: { timelineId: string; days: string[] }): 
         resizeSuccessTimelineId.value = ""
       }
     }, 700)
+
+    const { [payload.timelineId]: _removed, ...rest } = optimisticTimelineDaysById.value
+    optimisticTimelineDaysById.value = rest
   } catch (error) {
+    if (rollbackDays.length > 0) {
+      optimisticTimelineDaysById.value = {
+        ...optimisticTimelineDaysById.value,
+        [payload.timelineId]: rollbackDays,
+      }
+    }
+
     const reason = getErrorMessage(error)
     resizeErrorTimelineId.value = payload.timelineId
     setTimeout(() => {
@@ -456,7 +488,12 @@ async function resizeTimeline(payload: { timelineId: string; days: string[] }): 
     resizeErrorToastId.value = nextToast.id
 
     console.error("Failed to resize timeline:", error)
-    await actions.loadTimeline()
+    try {
+      await actions.loadTimeline()
+    } finally {
+      const { [payload.timelineId]: _removed, ...rest } = optimisticTimelineDaysById.value
+      optimisticTimelineDaysById.value = rest
+    }
   } finally {
     if (resizeSavingTimelineId.value === payload.timelineId) {
       resizeSavingTimelineId.value = ""
