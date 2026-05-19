@@ -33,6 +33,7 @@ const emit = defineEmits<{
   select: [timelineId: string]
   contextmenu: [payload: { x: number; y: number; timelineId: string }]
   commit: [payload: TimelineBarCommitModel]
+  edit: [timelineId: string]
 }>()
 
 const dragState = ref<DragState | null>(null)
@@ -220,6 +221,11 @@ function onContextMenu(event: MouseEvent): void {
   })
 }
 
+function onDoubleClick(): void {
+  emit("select", props.block.id)
+  emit("edit", props.block.id)
+}
+
 onBeforeUnmount(() => {
   clearDragListeners()
   clearGlobalCursor()
@@ -242,7 +248,7 @@ onBeforeUnmount(() => {
     :style="barStyle"
     @pointerdown.stop="onBodyPointerDown"
     @click.stop="emit('select', block.id)"
-    @dblclick.stop
+    @dblclick.stop.prevent="onDoubleClick"
     @contextmenu.stop.prevent="onContextMenu"
   >
     <button

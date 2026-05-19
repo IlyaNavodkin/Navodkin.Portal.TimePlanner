@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import MyTimelineBar from "~/components/my-test-timeline/MyTimelineBar.vue"
+import { isWeekendIsoDay } from "~/composables/my-test-timeline/useMyTimelineDate"
 import type {
   TimelineBarCommitModel,
   TimelineCreatePayloadModel,
@@ -65,6 +66,22 @@ const monthBoundaryIndexes = computed(() => {
     }
 
     if (currentDay.slice(0, 7) !== previousDay.slice(0, 7)) {
+      result.push(dayIndex)
+    }
+  }
+
+  return result
+})
+const weekendDayIndexes = computed(() => {
+  const result: number[] = []
+
+  for (const dayIndex of visibleDayIndexes.value) {
+    const day = props.days[dayIndex]
+    if (!day) {
+      continue
+    }
+
+    if (isWeekendIsoDay(day)) {
       result.push(dayIndex)
     }
   }
@@ -248,6 +265,17 @@ onBeforeUnmount(() => {
         :style="todayHighlightStyle"
       />
       <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
+      <div class="my-timeline-charge-row__weekend-layer">
+        <div
+          v-for="dayIndex in weekendDayIndexes"
+          :key="`weekend-track-${row.id}-${dayIndex}`"
+          class="my-timeline-charge-row__weekend-cell"
+          :style="{
+            left: `${(dayIndex - viewStartIndex) * pxPerDay}px`,
+            width: `${pxPerDay}px`,
+          }"
+        />
+      </div>
       <div class="my-timeline-charge-row__month-boundaries">
         <div
           v-for="dayIndex in monthBoundaryIndexes"
@@ -294,6 +322,7 @@ onBeforeUnmount(() => {
         :error="errorTimelineId === block.id"
         @commit="emit('resize', $event)"
         @select="emit('select', $event)"
+        @edit="emit('edit', $event)"
         @contextmenu="openContextMenu"
       />
     </div>
@@ -322,6 +351,17 @@ onBeforeUnmount(() => {
           :style="todayHighlightStyle"
         />
         <div class="my-timeline-charge-row__grid-bg" :style="gridBackgroundStyle" />
+        <div class="my-timeline-charge-row__weekend-layer">
+          <div
+            v-for="dayIndex in weekendDayIndexes"
+            :key="`weekend-full-${row.id}-${dayIndex}`"
+            class="my-timeline-charge-row__weekend-cell"
+            :style="{
+              left: `${(dayIndex - viewStartIndex) * pxPerDay}px`,
+              width: `${pxPerDay}px`,
+            }"
+          />
+        </div>
         <div class="my-timeline-charge-row__month-boundaries">
           <div
             v-for="dayIndex in monthBoundaryIndexes"
@@ -368,6 +408,7 @@ onBeforeUnmount(() => {
           :error="errorTimelineId === block.id"
           @commit="emit('resize', $event)"
           @select="emit('select', $event)"
+          @edit="emit('edit', $event)"
           @contextmenu="openContextMenu"
         />
       </div>
@@ -454,6 +495,19 @@ onBeforeUnmount(() => {
 .my-timeline-charge-row__grid-bg {
   position: absolute;
   inset: 0;
+}
+
+.my-timeline-charge-row__weekend-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.my-timeline-charge-row__weekend-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--ui-border-muted) 24%, transparent);
 }
 
 .my-timeline-charge-row__today-highlight {

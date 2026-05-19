@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatMonthLabel } from "~/composables/my-test-timeline/useMyTimelineDate"
+import { formatMonthLabel, isWeekendIsoDay } from "~/composables/my-test-timeline/useMyTimelineDate"
 import type { TimelineZoomPreset } from "~/composables/my-test-timeline/types"
 
 const props = defineProps<{
@@ -104,6 +104,7 @@ function shouldRenderMonth(index: number): boolean {
         :class="{
           'my-timeline-header__cell--month-boundary': shouldRenderMonth(index) && index > 0,
           'my-timeline-header__cell--today': day === todayIso,
+          'my-timeline-header__cell--weekend': isWeekendIsoDay(day),
         }"
       >
         <span v-if="index % labelStep === 0">{{ day.slice(8, 10) }}</span>
@@ -174,6 +175,10 @@ function shouldRenderMonth(index: number): boolean {
 
 .my-timeline-header__cell--today {
   background: color-mix(in srgb, var(--ui-primary) 18%, transparent);
+}
+
+.my-timeline-header__cell--weekend {
+  background: color-mix(in srgb, var(--ui-border-muted) 28%, transparent);
 }
 
 .my-timeline-header__cell--month-boundary {

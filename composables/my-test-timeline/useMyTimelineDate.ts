@@ -48,3 +48,8 @@ export function formatMonthLabel(isoDay: string): string {
     year: "numeric",
   }).format(new Date(`${isoDay}T00:00:00Z`))
 }
+
+export function isWeekendIsoDay(isoDay: string): boolean {
+  const dayOfWeek = new Date(`${isoDay}T00:00:00Z`).getUTCDay()
+  return dayOfWeek === 0 || dayOfWeek === 6
+}

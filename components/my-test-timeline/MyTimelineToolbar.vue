@@ -52,7 +52,7 @@ const emit = defineEmits<{
           class="my-timeline-toolbar__select my-timeline-toolbar__select--year"
           @update:model-value="emit('update:selectedYear', String($event))"
         />
-        <UButton color="neutral" variant="soft" icon="i-lucide-filter-x" @click="emit('reset-filters')">
+        <UButton color="primary" variant="soft" icon="i-lucide-filter-x" @click="emit('reset-filters')">
           Reset filters
         </UButton>
       </div>
@@ -72,7 +72,7 @@ const emit = defineEmits<{
       <div class="my-timeline-toolbar__group-title">Pan</div>
       <div class="my-timeline-toolbar__controls">
         <UButton color="neutral" variant="soft" size="xs" icon="i-lucide-arrow-left" @click="emit('pan-left')">Left</UButton>
-        <UButton color="neutral" variant="soft" size="xs" icon="i-lucide-calendar-days" @click="emit('pan-today')">Today</UButton>
+        <UButton color="primary" variant="soft" size="xs" icon="i-lucide-calendar-days" @click="emit('pan-today')">Today</UButton>
         <UButton color="neutral" variant="soft" size="xs" icon="i-lucide-arrow-right" @click="emit('pan-right')">Right</UButton>
       </div>
     </div>
