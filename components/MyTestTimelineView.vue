@@ -38,6 +38,8 @@ interface TimelineRenderRowCharge {
 type TimelineRenderRow = TimelineRenderRowProject | TimelineRenderRowCharge
 
 interface TimelineEditFormState {
+  projectExternalId: string
+  chargeExternalId: string
   employeeExternalId: string
   comment: string
   startDay: string
@@ -114,6 +116,8 @@ const editModalOpen = ref(false)
 const editFormError = ref("")
 const editTimelineId = ref("")
 const editForm = ref<TimelineEditFormState>({
+  projectExternalId: "",
+  chargeExternalId: "",
   employeeExternalId: "",
   comment: "",
   startDay: "",
@@ -125,6 +129,49 @@ const employeeOptions = computed(() =>
     label: employee.name,
     value: employee.id,
   })),
+)
+
+const editProjectOptions = computed(() => {
+  const seen = new Set<string>()
+  const options: Array<{ label: string; value: string }> = []
+
+  for (const row of props.rows) {
+    if (seen.has(row.projectExternalId)) {
+      continue
+    }
+
+    seen.add(row.projectExternalId)
+    options.push({
+      label: row.projectName,
+      value: row.projectExternalId,
+    })
+  }
+
+  return options.sort((left, right) => left.label.localeCompare(right.label))
+})
+
+const editChargeOptionsByProject = computed(() => {
+  const result = new Map<string, Array<{ label: string; value: string }>>()
+
+  for (const row of props.rows) {
+    const bucket = result.get(row.projectExternalId) ?? []
+    bucket.push({
+      label: row.chargeName,
+      value: row.chargeExternalId,
+    })
+    result.set(row.projectExternalId, bucket)
+  }
+
+  for (const [projectExternalId, options] of result) {
+    options.sort((left, right) => left.label.localeCompare(right.label))
+    result.set(projectExternalId, options)
+  }
+
+  return result
+})
+
+const editChargeOptions = computed(() =>
+  editChargeOptionsByProject.value.get(editForm.value.projectExternalId) ?? [],
 )
 
 const normalizedYearRange = computed(() => {
@@ -410,6 +457,8 @@ function openEditDialog(timelineId: string): void {
   editTimelineId.value = timelineId
   editFormError.value = ""
   editForm.value = {
+    projectExternalId: hit.row.projectExternalId,
+    chargeExternalId: hit.row.chargeExternalId,
     employeeExternalId: hit.block.employeeExternalId,
     comment: hit.block.comment ?? "",
     startDay,
@@ -426,6 +475,24 @@ function closeEditDialog(): void {
 function submitEditDialog(): void {
   const timelineId = editTimelineId.value
   if (!timelineId) {
+    return
+  }
+
+  const projectExternalId = editForm.value.projectExternalId.trim()
+  if (!projectExternalId) {
+    editFormError.value = "Project is required."
+    return
+  }
+
+  const chargeExternalId = editForm.value.chargeExternalId.trim()
+  if (!chargeExternalId) {
+    editFormError.value = "Charge is required."
+    return
+  }
+
+  const projectChargeOptions = editChargeOptionsByProject.value.get(projectExternalId) ?? []
+  if (!projectChargeOptions.some((option) => option.value === chargeExternalId)) {
+    editFormError.value = "Selected charge does not belong to selected project."
     return
   }
 
@@ -449,6 +516,8 @@ function submitEditDialog(): void {
 
   emit("update", {
     timelineId,
+    projectExternalId,
+    chargeExternalId,
     employeeExternalId,
     comment: editForm.value.comment.trim(),
     startDay: editForm.value.startDay,
@@ -677,6 +746,22 @@ watch([visibleDays, effectivePxPerDay], () => {
 })
 
 watch(
+  () => editForm.value.projectExternalId,
+  (nextProjectId, previousProjectId) => {
+    if (!editModalOpen.value || !nextProjectId || nextProjectId === previousProjectId) {
+      return
+    }
+
+    const options = editChargeOptionsByProject.value.get(nextProjectId) ?? []
+    if (options.some((option) => option.value === editForm.value.chargeExternalId)) {
+      return
+    }
+
+    editForm.value.chargeExternalId = options[0]?.value ?? ""
+  },
+)
+
+watch(
   () => timelineHeaderWrapRef.value,
   () => {
     void nextTick(() => {
@@ -811,23 +896,28 @@ watch(
       </div>
     </div>
 
-    <UModal v-model:open="createModalOpen" title="Create timeline">
+    <UModal v-model:open="createModalOpen" title="Create timeline" :ui="{ content: 'sm:max-w-2xl' }">
       <template #body>
-        <div class="space-y-4">
+        <div class="space-y-5">
           <UAlert v-if="createFormError" color="error" variant="soft" :description="createFormError" />
 
-          <div v-if="createTargetRow" class="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <div class="text-sm">
-              <span class="text-muted">Project: </span>
-              <span class="font-medium text-highlighted">{{ createTargetRow.projectName }}</span>
-            </div>
-            <div class="text-sm">
-              <span class="text-muted">Charge: </span>
-              <span class="font-medium text-highlighted">{{ createTargetRow.chargeName }}</span>
+          <div v-if="createTargetRow" class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Target</div>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div class="space-y-1">
+                <div class="text-[11px] text-muted">Project</div>
+                <div class="text-sm font-medium text-highlighted">{{ createTargetRow.projectName }}</div>
+              </div>
+              <div class="space-y-1">
+                <div class="text-[11px] text-muted">Charge</div>
+                <div class="text-sm font-medium text-highlighted">{{ createTargetRow.chargeName }}</div>
+              </div>
             </div>
           </div>
 
-          <UFormField label="Employee">
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Assignment</div>
+            <UFormField label="Employee">
             <USelectMenu
               v-model="createForm.employeeExternalId"
               :items="employeeOptions"
@@ -835,22 +925,30 @@ watch(
               label-key="label"
               search-input
               placeholder="Select employee"
+              class="w-full"
             />
-          </UFormField>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Start date">
-              <UInput v-model="createForm.startDay" type="date" />
-            </UFormField>
-
-            <UFormField label="End date">
-              <UInput v-model="createForm.endDay" type="date" />
             </UFormField>
           </div>
 
-          <UFormField label="Comment">
-            <UTextarea v-model="createForm.comment" :rows="3" placeholder="Comment" />
-          </UFormField>
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Period</div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField label="Start date">
+                <UInput v-model="createForm.startDay" type="date" class="w-full" />
+              </UFormField>
+
+              <UFormField label="End date">
+                <UInput v-model="createForm.endDay" type="date" class="w-full" />
+              </UFormField>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Comment</div>
+            <UFormField>
+              <UTextarea v-model="createForm.comment" :rows="3" placeholder="Comment" class="w-full" />
+            </UFormField>
+          </div>
         </div>
       </template>
 
@@ -862,35 +960,72 @@ watch(
       </template>
     </UModal>
 
-    <UModal v-model:open="editModalOpen" title="Edit timeline">
+    <UModal v-model:open="editModalOpen" title="Edit timeline" :ui="{ content: 'sm:max-w-2xl' }">
       <template #body>
-        <div class="space-y-4">
+        <div class="space-y-5">
           <UAlert v-if="editFormError" color="error" variant="soft" :description="editFormError" />
 
-          <UFormField label="Employee">
-            <USelectMenu
-              v-model="editForm.employeeExternalId"
-              :items="employeeOptions"
-              value-key="value"
-              label-key="label"
-              search-input
-              placeholder="Select employee"
-            />
-          </UFormField>
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Assignment</div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField label="Project">
+                <USelectMenu
+                  v-model="editForm.projectExternalId"
+                  :items="editProjectOptions"
+                  value-key="value"
+                  label-key="label"
+                  search-input
+                  placeholder="Select project"
+                  class="w-full"
+                />
+              </UFormField>
 
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <UFormField label="Start date">
-              <UInput v-model="editForm.startDay" type="date" />
-            </UFormField>
+              <UFormField label="Charge">
+                <USelectMenu
+                  v-model="editForm.chargeExternalId"
+                  :items="editChargeOptions"
+                  value-key="value"
+                  label-key="label"
+                  search-input
+                  :disabled="editChargeOptions.length === 0"
+                  placeholder="Select charge"
+                  class="w-full"
+                />
+              </UFormField>
 
-            <UFormField label="End date">
-              <UInput v-model="editForm.endDay" type="date" />
-            </UFormField>
+              <UFormField label="Employee" class="md:col-span-2">
+                <USelectMenu
+                  v-model="editForm.employeeExternalId"
+                  :items="employeeOptions"
+                  value-key="value"
+                  label-key="label"
+                  search-input
+                  placeholder="Select employee"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
           </div>
 
-          <UFormField label="Comment">
-            <UTextarea v-model="editForm.comment" :rows="3" placeholder="Comment" />
-          </UFormField>
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Period</div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <UFormField label="Start date">
+                <UInput v-model="editForm.startDay" type="date" class="w-full" />
+              </UFormField>
+
+              <UFormField label="End date">
+                <UInput v-model="editForm.endDay" type="date" class="w-full" />
+              </UFormField>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-default px-3 py-3">
+            <div class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">Comment</div>
+            <UFormField>
+              <UTextarea v-model="editForm.comment" :rows="3" placeholder="Comment" class="w-full" />
+            </UFormField>
+          </div>
         </div>
       </template>
 

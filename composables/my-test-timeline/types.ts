@@ -46,6 +46,8 @@ export interface TimelineResizePayloadModel {
 
 export interface TimelineUpdatePayloadModel {
   timelineId: string
+  projectExternalId: string
+  chargeExternalId: string
   employeeExternalId: string
   comment: string
   startDay: string

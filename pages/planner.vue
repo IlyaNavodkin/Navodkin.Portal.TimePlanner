@@ -371,6 +371,14 @@ async function handleUpdateFromTimelineView(payload: TimelineUpdatePayloadModel)
     request.employeeExternalId = employeeExternalId
   }
 
+  if (payload.projectExternalId !== timeline.projectExternalId) {
+    request.projectExternalId = payload.projectExternalId
+  }
+
+  if (payload.chargeExternalId !== timeline.chargeExternalId) {
+    request.chargeExternalId = payload.chargeExternalId
+  }
+
   const nextComment = payload.comment.trim()
   if (nextComment) {
     request.comment = nextComment
