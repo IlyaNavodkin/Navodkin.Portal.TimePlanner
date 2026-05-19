@@ -5,11 +5,17 @@ const DEFAULT_POSTGRES_PORT = 5432
 let poolSingleton: Pool | null = null
 
 function readRequiredEnv(name: string): string {
-  const value = process.env[name]
+  const value = process.env[name]?.trim()
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`)
   }
   return value
+}
+
+function readPostgresHost(): string {
+  const host = readRequiredEnv("POSTGRES_HOST")
+  // Avoid IPv6 localhost (::1) resolution issues on local dev machines.
+  return host.toLowerCase() === "localhost" ? "127.0.0.1" : host
 }
 
 function readPort(): number {
@@ -27,7 +33,7 @@ export function getPgPool(): Pool {
   }
 
   poolSingleton = new Pool({
-    host: readRequiredEnv("POSTGRES_HOST"),
+    host: readPostgresHost(),
     port: readPort(),
     database: readRequiredEnv("POSTGRES_DB"),
     user: readRequiredEnv("POSTGRES_USER"),

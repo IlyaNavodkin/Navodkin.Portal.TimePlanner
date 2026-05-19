@@ -1,7 +1,7 @@
 import { access, readdir, readFile } from "node:fs/promises"
 import { constants as fsConstants } from "node:fs"
 import path from "node:path"
-import type { Pool } from "pg"
+import { Pool } from "pg"
 
 import { getPgPool } from "../core/db/pg.ts"
 
@@ -22,6 +22,129 @@ interface MigrationDefinition {
   name: string
   upFileName: string
   downFileName: string
+}
+
+const DEFAULT_BOOTSTRAP_RETRY_ATTEMPTS = 15
+const DEFAULT_BOOTSTRAP_RETRY_DELAY_MS = 1000
+
+function readRequiredEnv(name: string): string {
+  const value = process.env[name]?.trim()
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+function readPostgresHost(): string {
+  const host = readRequiredEnv("POSTGRES_HOST")
+  // Avoid IPv6 localhost (::1) resolution issues on local dev machines.
+  return host.toLowerCase() === "localhost" ? "127.0.0.1" : host
+}
+
+function readPostgresPort(): number {
+  const raw = process.env.POSTGRES_PORT?.trim() || "5432"
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`POSTGRES_PORT must be a number, got: ${raw}`)
+  }
+  return parsed
+}
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim()
+  if (!raw) {
+    return fallback
+  }
+
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer, got: ${raw}`)
+  }
+
+  return parsed
+}
+
+function quotePgIdentifier(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`
+}
+
+function isDuplicateDatabaseError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "42P04"
+  )
+}
+
+function isConnectionRefusedError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "ECONNREFUSED"
+  )
+}
+
+async function wait(delayMs: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+}
+
+async function ensureDatabaseExistsFromEnv(): Promise<void> {
+  const targetDatabase = readRequiredEnv("POSTGRES_DB")
+  const bootstrapDatabase = process.env.POSTGRES_BOOTSTRAP_DB?.trim() || "postgres"
+  const host = readPostgresHost()
+  const port = readPostgresPort()
+  const retryAttempts = readPositiveIntEnv("POSTGRES_BOOTSTRAP_RETRY_ATTEMPTS", DEFAULT_BOOTSTRAP_RETRY_ATTEMPTS)
+  const retryDelayMs = readPositiveIntEnv("POSTGRES_BOOTSTRAP_RETRY_DELAY_MS", DEFAULT_BOOTSTRAP_RETRY_DELAY_MS)
+
+  if (targetDatabase === bootstrapDatabase) {
+    return
+  }
+
+  for (let attempt = 1; attempt <= retryAttempts; attempt += 1) {
+    const bootstrapPool = new Pool({
+      host,
+      port,
+      database: bootstrapDatabase,
+      user: readRequiredEnv("POSTGRES_USER"),
+      password: readRequiredEnv("POSTGRES_PASSWORD"),
+      max: 1,
+      idleTimeoutMillis: 5000,
+    })
+
+    try {
+      const existsResult = await bootstrapPool.query<{ exists: boolean }>(
+        "select exists(select 1 from pg_database where datname = $1) as exists",
+        [targetDatabase],
+      )
+
+      if (existsResult.rows[0]?.exists) {
+        return
+      }
+
+      try {
+        await bootstrapPool.query(`create database ${quotePgIdentifier(targetDatabase)}`)
+        console.log(`[migrate] created database ${targetDatabase}`)
+      } catch (error) {
+        if (!isDuplicateDatabaseError(error)) {
+          throw error
+        }
+      }
+      return
+    } catch (error) {
+      if (!isConnectionRefusedError(error) || attempt >= retryAttempts) {
+        throw error
+      }
+
+      console.warn(
+        `[migrate] postgres is unavailable at ${host}:${port}, retry ${attempt}/${retryAttempts} in ${retryDelayMs}ms`,
+      )
+      await wait(retryDelayMs)
+    } finally {
+      await bootstrapPool.end().catch(() => undefined)
+    }
+  }
 }
 
 async function resolveMigrationsDir(): Promise<string> {
@@ -184,6 +307,10 @@ async function readAppliedVersions(pool: Pool): Promise<Set<number>> {
 }
 
 export async function applyPendingMigrations(options?: { pool?: Pool; closePool?: boolean }): Promise<void> {
+  if (!options?.pool) {
+    await ensureDatabaseExistsFromEnv()
+  }
+
   const pool = options?.pool ?? getPgPool()
   const closePool = options?.closePool ?? false
   const migrationsDir = await resolveMigrationsDir()

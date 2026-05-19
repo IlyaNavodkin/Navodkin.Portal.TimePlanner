@@ -9,7 +9,6 @@ interface TimelineReadRow {
   charge_external_id: string
   manager_external_id: string
   employee_external_id: string
-  employee_name: string | null
   days: string[]
 }
 
@@ -28,7 +27,6 @@ export class PgTimelineReadRepository implements TimelineReadRepository {
         t.charge_external_id,
         t.manager_external_id,
         t.employee_external_id,
-        t.employee_name_snapshot as employee_name,
         array_agg(td.work_date::text order by td.work_date) as days
       from timelines t
       inner join timeline_days td
@@ -44,8 +42,7 @@ export class PgTimelineReadRepository implements TimelineReadRepository {
         t.project_external_id,
         t.charge_external_id,
         t.manager_external_id,
-        t.employee_external_id,
-        t.employee_name_snapshot
+        t.employee_external_id
       order by min(td.work_date), t.id
       `,
       [filter.managerId, filter.from, filter.to, projectIds, chargeIds],
@@ -57,7 +54,6 @@ export class PgTimelineReadRepository implements TimelineReadRepository {
       chargeExternalId: row.charge_external_id,
       managerExternalId: row.manager_external_id,
       employeeExternalId: row.employee_external_id,
-      employeeName: row.employee_name ?? "",
       days: row.days,
     }))
   }

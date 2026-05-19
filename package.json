@@ -7,7 +7,6 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "migrate": "node --experimental-strip-types server/db/migrate.ts",
-    "test:backend": "node scripts/run-backend-tests.mjs",
     "smoke:frontend": "node scripts/smoke-check.mjs",
     "postinstall": "nuxt prepare"
   },

@@ -12,7 +12,6 @@ export interface TimelineView {
   chargeExternalId: string
   managerExternalId: string
   employeeExternalId: string
-  employeeName: string
   days: string[]
 }
 
@@ -25,7 +24,6 @@ export interface CreateTimelineInput {
   chargeExternalId: string
   managerExternalId: string
   employeeExternalId: string
-  employeeName?: string
   comment?: string
 }
 
@@ -53,7 +51,6 @@ export interface UpdateTimelineMetaInput {
   chargeExternalId?: string
   managerExternalId?: string
   employeeExternalId?: string
-  employeeName?: string
   comment?: string
 }
 
@@ -63,7 +60,6 @@ export interface TimelineMeta {
   chargeExternalId: string
   managerExternalId: string
   employeeExternalId: string
-  employeeName?: string
   comment?: string
 }
 

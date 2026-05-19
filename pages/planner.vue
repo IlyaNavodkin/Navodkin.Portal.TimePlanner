@@ -120,6 +120,7 @@ function sortIsoDays(days: string[]): string[] {
 function getTimelineLayouts(
   items: TimelineItemDto[],
   dayToIndex: Map<string, number>,
+  employeeNameById: Map<string, string>,
 ): { blocks: TimelineBlockLayout[]; lanesCount: number } {
   const normalized = items
     .map((timeline) => {
@@ -134,7 +135,7 @@ function getTimelineLayouts(
       return {
         id: timeline.id,
         employeeExternalId: timeline.employeeExternalId,
-        employeeName: timeline.employeeName,
+        employeeName: employeeNameById.get(timeline.employeeExternalId) ?? timeline.employeeExternalId,
         startIndex: Math.min(...indexes),
         endIndex: Math.max(...indexes),
       }
@@ -201,6 +202,14 @@ const chargeNameById = computed(() => {
   return result
 })
 
+const employeeNameById = computed(() => {
+  const result = new Map<string, string>()
+  for (const employee of employees.value) {
+    result.set(employee.id, employee.name)
+  }
+  return result
+})
+
 const timelineById = computed(() => {
   const result = new Map<string, TimelineItemDto>()
   for (const timeline of timelines.value) {
@@ -230,7 +239,11 @@ const timelineRows = computed<TimelineGridRowModel[]>(() => {
     const projectName = projectNameById.value.get(projectExternalId) ?? projectExternalId
     const chargeName = chargeNameById.value.get(chargeExternalId) ?? chargeExternalId
     const rowTimelines = timelinesByKey.get(key) ?? []
-    const { blocks, lanesCount } = getTimelineLayouts(rowTimelines, dayToIndex.value)
+    const { blocks, lanesCount } = getTimelineLayouts(
+      rowTimelines,
+      dayToIndex.value,
+      employeeNameById.value,
+    )
 
     rows.push({
       id: key,

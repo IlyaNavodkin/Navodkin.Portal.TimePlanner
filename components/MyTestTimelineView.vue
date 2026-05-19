@@ -413,8 +413,8 @@ function submitEditDialog(): void {
     return
   }
 
-  const startIndex = props.days.findIndex((day) => day === editForm.value.startDay)
-  const endIndex = props.days.findIndex((day) => day === editForm.value.endDay)
+  const startIndex = daysForRows.value.findIndex((day) => day === editForm.value.startDay)
+  const endIndex = daysForRows.value.findIndex((day) => day === editForm.value.endDay)
   if (startIndex < 0 || endIndex < 0) {
     editFormError.value = "Invalid date range."
     return
@@ -473,8 +473,8 @@ function submitCreateDialog(): void {
     return
   }
 
-  const startIndex = props.days.findIndex((day) => day === createForm.value.startDay)
-  const endIndex = props.days.findIndex((day) => day === createForm.value.endDay)
+  const startIndex = daysForRows.value.findIndex((day) => day === createForm.value.startDay)
+  const endIndex = daysForRows.value.findIndex((day) => day === createForm.value.endDay)
   if (startIndex < 0 || endIndex < 0) {
     createFormError.value = "Invalid date range."
     return

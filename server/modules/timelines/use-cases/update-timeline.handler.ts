@@ -46,7 +46,6 @@ export class UpdateTimelineHandler {
       managerExternalId: input.managerExternalId ?? current.managerExternalId,
       employeeExternalId: input.employeeExternalId ?? current.employeeExternalId,
     }
-    let validatedEmployeeName: string | undefined
 
     if (input.managerExternalId !== undefined || input.employeeExternalId !== undefined) {
       const employees = await this.providerService.getEmployeesByManager(next.managerExternalId)
@@ -58,8 +57,6 @@ export class UpdateTimelineHandler {
           message: "employeeExternalId does not belong to managerExternalId",
         })
       }
-
-      validatedEmployeeName = employee.name
     }
 
     if (input.projectExternalId !== undefined || input.chargeExternalId !== undefined) {
@@ -83,7 +80,6 @@ export class UpdateTimelineHandler {
           chargeExternalId: input.chargeExternalId,
           managerExternalId: input.managerExternalId,
           employeeExternalId: input.employeeExternalId,
-          employeeName: validatedEmployeeName,
           comment: input.comment,
         })
       }

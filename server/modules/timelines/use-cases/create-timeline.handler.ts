@@ -47,7 +47,6 @@ export class CreateTimelineHandler {
         chargeExternalId: input.chargeExternalId,
         managerExternalId: input.managerExternalId,
         employeeExternalId: input.employeeExternalId,
-        employeeName: employee.name,
         comment: input.comment,
       })
 

@@ -13,7 +13,6 @@ interface TimelineMetaRow {
   charge_external_id: string
   manager_external_id: string
   employee_external_id: string
-  employee_name_snapshot: string | null
   comment: string | null
 }
 
@@ -29,7 +28,6 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
         charge_external_id,
         manager_external_id,
         employee_external_id,
-        employee_name_snapshot,
         comment
       from timelines
       where id = $1
@@ -49,7 +47,6 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
       chargeExternalId: row.charge_external_id,
       managerExternalId: row.manager_external_id,
       employeeExternalId: row.employee_external_id,
-      employeeName: row.employee_name_snapshot ?? undefined,
       comment: row.comment ?? undefined,
     }
   }
@@ -62,10 +59,9 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
         charge_external_id,
         manager_external_id,
         employee_external_id,
-        employee_name_snapshot,
         comment
       )
-      values ($1, $2, $3, $4, $5, $6)
+      values ($1, $2, $3, $4, $5)
       returning id
       `,
       [
@@ -73,7 +69,6 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
         input.chargeExternalId,
         input.managerExternalId,
         input.employeeExternalId,
-        input.employeeName ?? null,
         input.comment ?? null,
       ],
     )
@@ -105,11 +100,6 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
       updates.push(`employee_external_id = $${values.length}`)
     }
 
-    if (input.employeeName !== undefined) {
-      values.push(input.employeeName)
-      updates.push(`employee_name_snapshot = $${values.length}`)
-    }
-
     if (input.comment !== undefined) {
       values.push(input.comment)
       updates.push(`comment = $${values.length}`)
@@ -136,10 +126,10 @@ export class PgTimelineMutateRepository implements TimelineMutateRepository {
     await this.db.query("delete from timeline_days where timeline_id = $1", [timelineId])
 
     if (days.length > 0) {
-      const values = days.map((_, index) => `($1, $${index + 2}::date, 100)`).join(", ")
+      const values = days.map((_, index) => `($1, $${index + 2}::date)`).join(", ")
       await this.db.query(
         `
-        insert into timeline_days (timeline_id, work_date, load_percent)
+        insert into timeline_days (timeline_id, work_date)
         values ${values}
         `,
         [timelineId, ...days],
